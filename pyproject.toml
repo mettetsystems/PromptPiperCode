@@ -1,0 +1,19 @@
+[project]
+name = "prompt-piper"
+version = "0.1.0"
+description = "Local-first prompt engineering workbench"
+readme = "README.md"
+requires-python = ">=3.12"
+
+[project.optional-dependencies]
+dev = [
+    "prompt-piper-api[dev]",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["apps/api"]
+asyncio_mode = "auto"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]

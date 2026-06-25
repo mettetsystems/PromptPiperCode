@@ -1,0 +1,20 @@
+# Prompt Piper React/Vite frontend (nginx).
+# Build first: see README for web image build command.
+
+[Unit]
+Description=Prompt Piper Web UI
+After=network-online.target prompt-piper-api.service
+Wants=network-online.target
+Requires=prompt-piper-api.service
+
+[Container]
+Image=localhost/prompt-piper-web:latest
+ContainerName=prompt-piper-web
+Network=prompt-piper.network
+PublishPort=127.0.0.1:5173:8080
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=default.target

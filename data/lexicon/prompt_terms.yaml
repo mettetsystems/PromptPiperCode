@@ -1,0 +1,48 @@
+# Curated prompt-engineering replacements for vague terms (merged with WordNet lookups).
+# Each entry lists vague triggers and preferred replacements for CPU-only precision refinement.
+terms:
+  good:
+    replaces: [good, nice, fine, great]
+    suggestions: [specific, measurable, concrete, actionable, clear]
+  bad:
+    replaces: [bad, poor, wrong]
+    suggestions: [incorrect, incomplete, misleading, unusable, invalid]
+  nice:
+    replaces: [nice, pleasant]
+    suggestions: [clear, polished, professional, readable, concise]
+  great:
+    replaces: [great, awesome, cool]
+    suggestions: [effective, reliable, thorough, robust, strong]
+  interesting:
+    replaces: [interesting]
+    suggestions: [relevant, insightful, notable, informative, substantive]
+  big:
+    replaces: [big, huge, large]
+    suggestions: [major, critical, substantial, significant, high-priority]
+  small:
+    replaces: [small, tiny]
+    suggestions: [minor, limited, narrow, lightweight, concise]
+  several:
+    replaces: [several, many, few, various]
+    suggestions: [three, five, at most, at least, exactly]
+  thing:
+    replaces: [thing, stuff, something, item, object]
+    suggestions: [deliverable, artifact, output, component, requirement]
+  issue:
+    replaces: [issue, problem]
+    suggestions: [defect, risk, blocker, gap, failure mode]
+  aspect:
+    replaces: [aspect, element, factor, detail]
+    suggestions: [constraint, criterion, requirement, dependency, scope item]
+  area:
+    replaces: [area, field]
+    suggestions: [domain, topic, workstream, capability, subsystem]
+  situation:
+    replaces: [situation, circumstance, event]
+    suggestions: [scenario, condition, state, incident, context]
+  business:
+    replaces: [business, affair, deal]
+    suggestions: [workflow, process, initiative, objective, program]
+  component:
+    replaces: [component, part]
+    suggestions: [module, service, interface, layer, subsystem]

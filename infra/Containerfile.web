@@ -1,0 +1,30 @@
+FROM docker.io/library/node:22-alpine AS build
+
+WORKDIR /app
+
+COPY package.json ./
+COPY apps/web/package.json apps/web/
+COPY packages/shared/package.json packages/shared/
+
+RUN npm install --workspace @prompt-piper/web --include-workspace-root
+
+COPY packages/shared packages/shared
+COPY assets assets
+COPY apps/web apps/web
+
+ARG VITE_API_BASE_URL=http://127.0.0.1:8000
+ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
+
+RUN npm run build --workspace @prompt-piper/web
+
+FROM docker.io/library/nginx:1.27-alpine
+
+COPY infra/nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /app/apps/web/dist /usr/share/nginx/html
+
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget -qO- http://127.0.0.1:8080/ >/dev/null || exit 1
+
+CMD ["nginx", "-g", "daemon off;"]

@@ -1,0 +1,411 @@
+version: 1
+regression_cases:
+  - id: weekly-status
+    description: Engineering weekly status summary
+    requirement_card:
+      objective: Summarize weekly engineering status for leadership review.
+      audience: Engineering managers
+      desired_output_shape: Bulleted summary with risks and next steps
+      language: en
+      constraints:
+        - Keep the response within 300 words.
+      success_criteria:
+        - Covers blockers and owners.
+      unresolved_fields: []
+    baseline_body: |
+      Mission
+      -------
+      Summarize weekly engineering status for leadership review.
+
+      Context
+      -------
+      Audience: Engineering managers
+      Primary language: en
+
+      Constraints
+      ---------------
+      Keep the response within 300 words.
+      Use only provided source notes.
+
+      Style
+      -----
+      Direct and analytical.
+
+      Output contract
+      ----------------
+      Bulleted summary with risks and next steps.
+
+      Acceptance criteria
+      -------------------
+      Meet this criterion: Covers blockers and owners.
+    must_preserve:
+      - weekly engineering status
+      - blockers
+    critical_safety: true
+    safety_forbidden_patterns:
+      - invent metrics
+      - guaranteed outcome
+
+  - id: onboarding-checklist
+    description: Onboarding checklist with unspecified tone
+    requirement_card:
+      objective: Draft onboarding checklist for new hires.
+      audience: People operations
+      tone_style: ""
+      unresolved_fields:
+        - tone_style
+      success_criteria:
+        - Cover first-week tasks.
+    baseline_body: |
+      Mission
+      -------
+      Draft onboarding checklist for new hires.
+
+      Context
+      -------
+      Audience: People operations
+      Primary language: en
+
+      Constraints
+      ---------------
+      Keep it concise.
+
+      Style
+      -----
+      unspecified
+
+      Output contract
+      ----------------
+      Checklist with owners and due dates.
+
+      Acceptance criteria
+      -------------------
+      Meet this criterion: Cover first-week tasks.
+    must_preserve:
+      - onboarding checklist
+      - first-week
+    critical_safety: false
+    safety_forbidden_patterns: []
+
+  - id: customer-interview-summary
+    description: Product discovery interview notes
+    requirement_card:
+      objective: Summarize customer interview notes for product discovery.
+      audience: Product managers
+      desired_output_shape: Structured themes with supporting quotes
+      language: en
+      constraints:
+        - Do not invent customer quotes.
+      success_criteria:
+        - Separate pains from feature requests.
+      unresolved_fields: []
+    baseline_body: |
+      Mission
+      -------
+      Summarize customer interview notes for product discovery.
+
+      Context
+      -------
+      Audience: Product managers
+      Primary language: en
+
+      Constraints
+      ---------------
+      Do not invent customer quotes.
+      Use only supplied interview transcripts.
+
+      Style
+      -----
+      Neutral and evidence-based.
+
+      Output contract
+      ----------------
+      Structured themes with supporting quotes.
+
+      Acceptance criteria
+      -------------------
+      Meet this criterion: Separate pains from feature requests.
+    must_preserve:
+      - customer interview
+      - product discovery
+    critical_safety: true
+    safety_forbidden_patterns:
+      - invent metrics
+      - fabricated quote
+
+  - id: release-notes
+    description: Release notes for engineering team
+    requirement_card:
+      objective: Write release notes for the latest platform deployment.
+      audience: Engineering team
+      desired_output_shape: Short changelog with upgrade notes
+      language: en
+      unresolved_fields: []
+    baseline_body: |
+      Mission
+      -------
+      Write release notes for the latest platform deployment.
+
+      Context
+      -------
+      Audience: Engineering team
+      Primary language: en
+
+      Constraints
+      ---------------
+      Mention breaking changes explicitly.
+
+      Style
+      -----
+      Technical and concise.
+
+      Output contract
+      ----------------
+      Short changelog with upgrade notes.
+
+      Acceptance criteria
+      -------------------
+      Meet this criterion: List migration steps when needed.
+    must_preserve:
+      - release notes
+      - platform deployment
+    critical_safety: false
+    safety_forbidden_patterns: []
+
+  - id: support-macro
+    description: Support macro for password reset
+    requirement_card:
+      objective: Create a support macro for password reset requests.
+      audience: Support agents
+      desired_output_shape: Step-by-step reply template
+      language: en
+      unresolved_fields: []
+    baseline_body: |
+      Mission
+      -------
+      Create a support macro for password reset requests.
+
+      Context
+      -------
+      Audience: Support agents
+      Primary language: en
+
+      Constraints
+      ---------------
+      Do not request unnecessary personal data.
+
+      Style
+      -----
+      Friendly and clear.
+
+      Output contract
+      ----------------
+      Step-by-step reply template.
+
+      Acceptance criteria
+      -------------------
+      Meet this criterion: Include escalation path for account lockouts.
+    must_preserve:
+      - password reset
+      - support macro
+    critical_safety: true
+    safety_forbidden_patterns:
+      - share passwords
+      - guaranteed outcome
+
+  - id: legal-contract-review
+    description: Vendor contract liability review
+    requirement_card:
+      objective: Review vendor contracts for liability clauses and indemnification.
+      audience: Legal counsel
+      desired_output_shape: Issue list with clause references
+      language: en
+      unresolved_fields: []
+    baseline_body: |
+      Mission
+      -------
+      Review vendor contracts for liability clauses and indemnification.
+
+      Context
+      -------
+      Audience: Legal counsel
+      Primary language: en
+
+      Constraints
+      ---------------
+      Flag ambiguous indemnification language.
+
+      Style
+      -----
+      Formal and precise.
+
+      Output contract
+      ----------------
+      Issue list with clause references.
+
+      Acceptance criteria
+      -------------------
+      Meet this criterion: Separate high-risk from informational findings.
+    must_preserve:
+      - liability
+      - indemnification
+    critical_safety: false
+    safety_forbidden_patterns: []
+
+  - id: code-review-prompt
+    description: Code review checklist prompt
+    requirement_card:
+      objective: Review pull requests for correctness, tests, and security risks.
+      audience: Senior engineers
+      desired_output_shape: Findings grouped by severity
+      language: en
+      unresolved_fields: []
+    baseline_body: |
+      Mission
+      -------
+      Review pull requests for correctness, tests, and security risks.
+
+      Context
+      -------
+      Audience: Senior engineers
+      Primary language: en
+
+      Constraints
+      ---------------
+      Focus on changed files only.
+
+      Style
+      -----
+      Direct and actionable.
+
+      Output contract
+      ----------------
+      Findings grouped by severity.
+
+      Acceptance criteria
+      -------------------
+      Meet this criterion: Recommend concrete fixes when possible.
+    must_preserve:
+      - pull requests
+      - security risks
+    critical_safety: false
+    safety_forbidden_patterns: []
+
+  - id: research-brief
+    description: Competitive research brief
+    requirement_card:
+      objective: Summarize competitive research for executive briefing.
+      audience: Executives
+      desired_output_shape: One-page brief with strategic implications
+      language: en
+      unresolved_fields: []
+    baseline_body: |
+      Mission
+      -------
+      Summarize competitive research for executive briefing.
+
+      Context
+      -------
+      Audience: Executives
+      Primary language: en
+
+      Constraints
+      ---------------
+      Distinguish verified facts from assumptions.
+
+      Style
+      -----
+      Executive and concise.
+
+      Output contract
+      ----------------
+      One-page brief with strategic implications.
+
+      Acceptance criteria
+      -------------------
+      Meet this criterion: Include recommended next actions.
+    must_preserve:
+      - competitive research
+      - executive briefing
+    critical_safety: true
+    safety_forbidden_patterns:
+      - invent metrics
+
+  - id: recipe-generator
+    description: Vegetarian recipe generator
+    requirement_card:
+      objective: Create vegetarian dinner recipes with pantry ingredients and timing.
+      audience: Home cooks
+      desired_output_shape: Recipe card with ingredients and steps
+      language: en
+      unresolved_fields: []
+    baseline_body: |
+      Mission
+      -------
+      Create vegetarian dinner recipes with pantry ingredients and timing.
+
+      Context
+      -------
+      Audience: Home cooks
+      Primary language: en
+
+      Constraints
+      ---------------
+      Respect listed dietary exclusions.
+
+      Style
+      -----
+      Warm and practical.
+
+      Output contract
+      ----------------
+      Recipe card with ingredients and steps.
+
+      Acceptance criteria
+      -------------------
+      Meet this criterion: Include prep and cook times.
+    must_preserve:
+      - vegetarian
+      - pantry ingredients
+    critical_safety: false
+    safety_forbidden_patterns: []
+
+  - id: incident-postmortem
+    description: Incident postmortem summary
+    requirement_card:
+      objective: Draft an incident postmortem with timeline, impact, and follow-ups.
+      audience: Incident response team
+      desired_output_shape: Postmortem report sections
+      language: en
+      unresolved_fields: []
+    baseline_body: |
+      Mission
+      -------
+      Draft an incident postmortem with timeline, impact, and follow-ups.
+
+      Context
+      -------
+      Audience: Incident response team
+      Primary language: en
+
+      Constraints
+      ---------------
+      Separate facts from hypotheses.
+
+      Style
+      -----
+      Blameless and factual.
+
+      Output contract
+      ----------------
+      Postmortem report sections.
+
+      Acceptance criteria
+      -------------------
+      Meet this criterion: List corrective actions with owners.
+    must_preserve:
+      - incident postmortem
+      - follow-ups
+    critical_safety: true
+    safety_forbidden_patterns:
+      - guaranteed outcome

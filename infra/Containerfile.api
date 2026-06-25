@@ -1,0 +1,43 @@
+FROM docker.io/library/python:3.12-slim-bookworm
+
+WORKDIR /app
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    REGISTRY_PATH=/app/data/registry \
+    ARTIFACTS_PATH=/app/data/artifacts \
+    AUDIT_LOG_PATH=/app/data/audit \
+    HF_HOME=/app/data/model-cache \
+    TRANSFORMERS_CACHE=/app/data/model-cache \
+    SENTENCE_TRANSFORMERS_HOME=/app/data/model-cache \
+    NLTK_DATA=/app/data/nltk_data \
+    LEXICON_VECTOR_INDEX_PATH=/app/data/lexicon/precision_vectors.json
+
+# git: registry commits; pandoc/weasyprint deps: optional artifact PDF/HTML export
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    libpq5 \
+    pandoc \
+    libpango-1.0-0 \
+    libpangocairo-1.0-0 \
+    libgdk-pixbuf-2.0-0 \
+    libffi8 \
+    shared-mime-info \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY apps/api/pyproject.toml apps/api/
+COPY apps/api/prompt_piper_api apps/api/prompt_piper_api
+COPY apps/api/prompt_piper apps/api/prompt_piper
+COPY data/lexicon/prompt_terms.yaml data/lexicon/prompt_terms.yaml
+
+RUN pip install --upgrade pip \
+    && pip install "./apps/api[lexicon]" \
+    && pip install weasyprint \
+    && mkdir -p /app/data/registry /app/data/artifacts /app/data/audit /app/data/model-cache \
+        /app/data/nltk_data /app/data/lexicon \
+    && python -c "import nltk; nltk.download('wordnet', download_dir='/app/data/nltk_data'); nltk.download('omw-1.4', download_dir='/app/data/nltk_data')"
+
+EXPOSE 8000
+
+CMD ["uvicorn", "prompt_piper_api.main:app", "--host", "0.0.0.0", "--port", "8000"]

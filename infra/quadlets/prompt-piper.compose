@@ -1,0 +1,21 @@
+# Run the full Prompt Piper stack via podman compose (recommended Quadlet method).
+# Install: scripts/install-quadlets.sh --method compose
+#
+# Build images once before first start:
+#   podman compose -f infra/podman-compose.yml build
+
+[Unit]
+Description=Prompt Piper (Podman Compose stack)
+Documentation=file://%h/PromptPiper/infra/quadlets/README.md
+After=network-online.target
+Wants=network-online.target
+
+[Compose]
+File=%h/PromptPiper/infra/podman-compose.yml
+WorkingDirectory=%h/PromptPiper
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=default.target

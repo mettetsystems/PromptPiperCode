@@ -1,0 +1,126 @@
+# Local-first Podman Compose stack for Prompt Piper (Fedora-friendly).
+# Run from repo root: ./scripts/dev-up.sh
+# Or: podman compose -f infra/podman-compose.yml up -d --build
+
+name: prompt-piper
+
+services:
+  postgres:
+    image: docker.io/pgvector/pgvector:pg16
+    container_name: prompt-piper-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-prompt_piper}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-prompt_piper}
+      POSTGRES_DB: ${POSTGRES_DB:-prompt_piper}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - ../data/postgres:/var/lib/postgresql/data:Z
+      - ./init-db.sql:/docker-entrypoint-initdb.d/01-pgvector.sql:ro,Z
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-prompt_piper} -d ${POSTGRES_DB:-prompt_piper}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ..
+      dockerfile: infra/Containerfile.api
+    container_name: prompt-piper-api
+    env_file:
+      - ../.env
+    environment:
+      API_HOST: 0.0.0.0
+      API_PORT: "8000"
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-prompt_piper}:${POSTGRES_PASSWORD:-prompt_piper}@postgres:5432/${POSTGRES_DB:-prompt_piper}
+      PROMPT_PIPER_EXPORT_ROOT: /exports
+      PROMPT_PIPER_HOST_EXPORT_ROOT: ${PROMPT_PIPER_HOST_EXPORT_ROOT:-/exports}
+      PROMPT_PIPER_REGISTRY_ROOT: /exports/registry
+      PROMPT_PIPER_ARTIFACT_ROOT: /exports/exports
+      PROMPT_PIPER_MODEL_CACHE: /models
+      HF_HOME: /models
+      TRANSFORMERS_CACHE: /models
+      SENTENCE_TRANSFORMERS_HOME: /models
+      NLTK_DATA: /app/data/nltk_data
+      LEXICON_VECTOR_INDEX_PATH: /app/data/lexicon/precision_vectors.json
+      AUDIT_LOG_PATH: /exports/audit
+      PROMPT_PIPER_LOCAL_BASE_URL: ${PROMPT_PIPER_LOCAL_BASE_URL:-http://host.containers.internal:8080/v1}
+      PROMPT_PIPER_EXTERNAL_INFERENCE_ENABLED: ${PROMPT_PIPER_EXTERNAL_INFERENCE_ENABLED:-false}
+      PROMPT_PIPER_EXTERNAL_ENABLED: ${PROMPT_PIPER_EXTERNAL_ENABLED:-false}
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - ${HOME}/Documents/PromptPiper:/exports:Z
+      - ../data/model-cache:/models:Z
+      - ../data/nltk_data:/app/data/nltk_data:Z
+      - ../data/lexicon:/app/data/lexicon:Z
+    extra_hosts:
+      - "host.containers.internal:host-gateway"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')\""]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ..
+      dockerfile: infra/Containerfile.web
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://127.0.0.1:8000}
+    container_name: prompt-piper-web
+    ports:
+      - "127.0.0.1:5173:8080"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Optional local llama.cpp OpenAI-compatible server (enable with: podman compose --profile llama up)
+  llama:
+    profiles: ["llama"]
+    image: docker.io/ggerganov/llama.cpp:server
+    container_name: prompt-piper-llama
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - ../data/models:/models:Z
+    command:
+      - --host
+      - "0.0.0.0"
+      - --port
+      - "8080"
+      - --model
+      - /models/model.gguf
+    restart: unless-stopped
+
+  # Optional background worker for embeddings and heavy artifact tasks (future use).
+  worker:
+    profiles: ["worker"]
+    build:
+      context: ..
+      dockerfile: infra/Containerfile.api
+    container_name: prompt-piper-worker
+    env_file:
+      - ../.env
+    environment:
+      PROMPT_PIPER_EXPORT_ROOT: /exports
+      PROMPT_PIPER_REGISTRY_ROOT: /exports/registry
+      PROMPT_PIPER_ARTIFACT_ROOT: /exports/exports
+      PROMPT_PIPER_MODEL_CACHE: /models
+      HF_HOME: /models
+      TRANSFORMERS_CACHE: /models
+      SENTENCE_TRANSFORMERS_HOME: /models
+    volumes:
+      - ${HOME}/Documents/PromptPiper:/exports:Z
+      - ../data/model-cache:/models:Z
+    command: ["sleep", "infinity"]
+    restart: unless-stopped

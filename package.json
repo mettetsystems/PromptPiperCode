@@ -1,0 +1,16 @@
+{
+  "name": "prompt-piper",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Local-first prompt engineering workbench",
+  "workspaces": [
+    "apps/web",
+    "packages/shared"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev --workspace @prompt-piper/web",
+    "build:web": "npm run build --workspace @prompt-piper/web",
+    "typecheck:web": "npm run typecheck --workspace @prompt-piper/web",
+    "test:web": "npm run test --workspace @prompt-piper/web"
+  }
+}

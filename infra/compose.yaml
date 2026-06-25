@@ -1,0 +1,21 @@
+# PostgreSQL only (optional). For the full local stack use infra/podman-compose.yml
+# or ./scripts/dev-up.sh instead.
+services:
+  postgres:
+    image: docker.io/pgvector/pgvector:pg16
+    container_name: prompt-piper-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-prompt_piper}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-prompt_piper}
+      POSTGRES_DB: ${POSTGRES_DB:-prompt_piper}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - ../data/postgres:/var/lib/postgresql/data:Z
+      - ./init-db.sql:/docker-entrypoint-initdb.d/01-pgvector.sql:ro,Z
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-prompt_piper} -d ${POSTGRES_DB:-prompt_piper}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s

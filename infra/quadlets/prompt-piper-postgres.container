@@ -1,0 +1,31 @@
+# PostgreSQL with pgvector for Prompt Piper.
+# Requires: podman build (see README) and scripts/init-db-quadlet.sh after first start.
+
+[Unit]
+Description=Prompt Piper PostgreSQL (pgvector)
+After=network-online.target prompt-piper-network.service
+Wants=network-online.target prompt-piper-network.service
+Before=prompt-piper-api.service
+
+[Container]
+Image=docker.io/pgvector/pgvector:pg16
+ContainerName=prompt-piper-postgres
+Network=prompt-piper.network
+PublishPort=127.0.0.1:5432:5432
+EnvironmentFile=%h/PromptPiper/.env
+Environment=POSTGRES_USER=prompt_piper
+Environment=POSTGRES_PASSWORD=prompt_piper
+Environment=POSTGRES_DB=prompt_piper
+Volume=%h/PromptPiper/data/postgres:/var/lib/postgresql/data:Z
+Volume=%h/PromptPiper/infra/init-db.sql:/docker-entrypoint-initdb.d/01-pgvector.sql:ro,Z
+HealthCmd=pg_isready -U prompt_piper -d prompt_piper
+HealthInterval=5s
+HealthTimeout=5s
+HealthRetries=10
+HealthStartPeriod=10s
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=default.target
