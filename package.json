@@ -1,0 +1,18 @@
+{
+  "name": "prompt-piper",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev --workspace @prompt-piper/web",
+    "build:web": "npm run build --workspace @prompt-piper/web",
+    "lint:web": "npm run lint --workspace @prompt-piper/web",
+    "lint:shared": "npm run lint --workspace @prompt-piper/shared"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

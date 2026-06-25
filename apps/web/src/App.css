@@ -1,0 +1,96 @@
+.app {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 4rem;
+}
+
+.app-header {
+  margin-bottom: 2rem;
+}
+
+.eyebrow {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6b5b4f;
+}
+
+h1 {
+  margin: 0 0 0.75rem;
+  font-size: clamp(2rem, 5vw, 2.75rem);
+  line-height: 1.1;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 1.05rem;
+  color: #4a4a4a;
+}
+
+.panel {
+  padding: 1.5rem;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.notice {
+  margin-top: 0;
+  color: #5a5a5a;
+}
+
+.status-card {
+  margin-top: 1.5rem;
+  padding: 1rem 1.25rem;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.status-card h3 {
+  margin-top: 0;
+}
+
+.status-card dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem 1rem;
+  margin: 0;
+}
+
+.status-card dt {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #6b6b6b;
+}
+
+.status-card dd {
+  margin: 0.15rem 0 0;
+  font-weight: 600;
+}
+
+.error {
+  color: #9b2c2c;
+}
+
+@media (prefers-color-scheme: dark) {
+  .eyebrow,
+  .subtitle,
+  .notice {
+    color: #c8c8c8;
+  }
+
+  .panel {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .status-card {
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .status-card dt {
+    color: #a8a8a8;
+  }
+}

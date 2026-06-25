@@ -1,0 +1,23 @@
+# Podman Compose manifest for local PostgreSQL with pgvector
+# Usage: podman-compose -f infra/podman-compose.yml up -d
+
+services:
+  postgres:
+    image: docker.io/pgvector/pgvector:pg16
+    container_name: prompt-piper-postgres
+    environment:
+      POSTGRES_USER: prompt_piper
+      POSTGRES_PASSWORD: prompt_piper
+      POSTGRES_DB: prompt_piper
+    ports:
+      - "5432:5432"
+    volumes:
+      - prompt_piper_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U prompt_piper -d prompt_piper"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  prompt_piper_pgdata:

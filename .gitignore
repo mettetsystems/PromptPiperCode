@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node
+node_modules/
+dist/
+*.local
+.vite/
+*.tsbuildinfo
+
+# Environment
+.env
+.env.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data (local artifacts; registry is Git-backed)
+data/artifacts/*
+!data/artifacts/.gitkeep
+data/*.db
+data/**/*.db
+
+# Logs
+*.log
