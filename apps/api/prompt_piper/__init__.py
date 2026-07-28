@@ -1,1 +1,1 @@
-"""Prompt Piper evaluation CLI package."""
+"""PromptPiperCode evaluation CLI package."""

@@ -1,6 +1,6 @@
 # Applications (`apps/`)
 
-Runnable application packages for Prompt Piper. Everything user-facing or API-facing lives here.
+Runnable application packages for PromptPiperCode. Everything user-facing or API-facing lives here.
 
 | Package | Role |
 |---------|------|

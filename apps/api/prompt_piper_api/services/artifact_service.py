@@ -30,6 +30,8 @@ _ARTIFACT_PATH_KEYS: dict[str, str] = {
     "optimized_md": "optimized_prompt.md",
     "optimized_txt": "optimized_prompt.txt",
     "requirement_card": "requirement_card.json",
+    "coding_prompt_spec_json": "coding_prompt_spec.json",
+    "coding_prompt_spec_yaml": "coding_prompt_spec.yaml",
     "metrics": "metrics.json",
     "similarity_report": "similarity_report.json",
     "lessons_learned": "lessons_learned.md",
@@ -304,6 +306,19 @@ class ArtifactService:
             "json",
             requirement_card.model_dump_json(indent=2),
         )
+        coding_spec = requirement_card.coding_spec_dict()
+        write_text(
+            "coding_prompt_spec.json",
+            "json",
+            json.dumps(coding_spec, indent=2),
+        )
+        coding_yaml = yaml.dump(
+            coding_spec,
+            default_flow_style=False,
+            sort_keys=False,
+            allow_unicode=True,
+        )
+        write_text("coding_prompt_spec.yaml", "yaml", coding_yaml)
 
         metrics_payload: dict[str, object] = {
             "optimization": optimization_result.metrics.model_dump(),

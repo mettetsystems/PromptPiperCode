@@ -74,7 +74,7 @@ def run_setup_wizard(
 
 def _banner() -> str:
     return (
-        "\nPrompt Piper setup — local model configuration\n"
+        "\nPromptPiperCode setup — local model configuration\n"
         "================================================\n"
         "Clarification and draft generation can use a local OpenAI-compatible\n"
         "server (llama.cpp, vLLM, etc.) or run in CPU-only mode with rule-based\n"
@@ -84,7 +84,7 @@ def _banner() -> str:
 
 def _run_interactive(read: InputFn, write: PrintFn) -> SetupResult:
     write(
-        "\nHow should Prompt Piper handle clarification and draft wording?\n"
+        "\nHow should PromptPiperCode handle clarification and draft wording?\n"
         "  1) CPU-only mode (no local chat model; rule-based fallbacks)\n"
         "  2) Set up a local SLM (recommended with llama.cpp)\n"
     )
@@ -142,7 +142,7 @@ def _run_interactive(read: InputFn, write: PrintFn) -> SetupResult:
 
 def _ask_deployment(read: InputFn, write: PrintFn) -> str:
     write(
-        "\nWhere will the Prompt Piper API run?\n"
+        "\nWhere will the PromptPiperCode API run?\n"
         "  1) Native dev (API on host — use 127.0.0.1 for the model server)\n"
         "  2) Podman stack (API in container — use host.containers.internal)\n"
     )
@@ -338,7 +338,7 @@ def _print_next_steps(write: PrintFn, result: SetupResult) -> None:
         )
         write("  3. Start the API (auto-starts llama-server when a CUDA/ROCm GPU is present):\n")
         write("     make dev-api\n")
-        write("     # Without a GPU, Prompt Piper uses rule-based CPU mode automatically.\n")
+        write("     # Without a GPU, PromptPiperCode uses rule-based CPU mode automatically.\n")
         write("  4. Or use Podman profile:\n")
         write(f"     cp data/models/{preset.suggested_gguf_filename} data/models/model.gguf\n")
         write("     podman compose -f infra/podman-compose.yml --profile llama up -d\n")

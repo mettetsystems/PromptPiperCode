@@ -29,17 +29,16 @@ def service(registry_path: Path) -> SessionService:
 
 def _sample_body(*, repeat_line: str | None = None, conflict: bool = False) -> str:
     lines = [
-        "Mission",
-        "-------",
-        "Summarize weekly engineering status for leadership review.",
+        "Technical Context",
+        "-----------------",
+        "Environment: Python with FastAPI and Pydantic",
         "",
-        "Context",
-        "-------",
-        "Audience: Engineering managers",
-        "Primary language: en",
+        "Core Task and Scope",
+        "-------------------",
+        "Objective: Add FastAPI endpoint for weekly engineering status summaries.",
         "",
-        "Constraints",
-        "---------------",
+        "Architectural Rules and Constraints",
+        "-----------------------------------",
         "Keep the response within 300 words.",
         "Use only provided source notes.",
     ]
@@ -55,25 +54,25 @@ def _sample_body(*, repeat_line: str | None = None, conflict: bool = False) -> s
             ]
         )
     if repeat_line:
-        lines.extend(["", "Context", "-------", repeat_line, repeat_line])
+        lines.extend(["", "Technical Context", "-----------------", repeat_line, repeat_line])
     lines.extend(
         [
             "",
-            "Style",
-            "-----",
-            "Direct and analytical.",
+            "Inputs, Outputs, and Contracts",
+            "------------------------------",
+            "Output contract: JSON with blockers, owners, and next steps.",
             "",
-            "Output contract",
-            "----------------",
-            "Bulleted summary with risks and next steps.",
+            "Edge Cases and Error Strategy",
+            "-----------------------------",
+            "Failure handling: raise HTTPException on validation errors.",
             "",
-            "Acceptance criteria",
+            "Response Formatting",
             "-------------------",
-            "Meet this criterion: Covers blockers and owners.",
+            "Explanation level: brief rationale then code.",
+            "Covers blockers and owners.",
         ]
     )
     return "\n".join(lines)
-
 
 def _enter_similarity_check(
     service: SessionService,

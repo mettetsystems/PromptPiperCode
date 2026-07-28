@@ -3,13 +3,14 @@ from __future__ import annotations
 import re
 
 from prompt_piper_api.domain.optimization import ConstraintGraph, ConstraintSlot
-from prompt_piper_api.domain.requirement_card import RequirementCard, OptimizationTargets
+from prompt_piper_api.domain.requirement_card import LIST_LEAF_FIELDS, RequirementCard
 from prompt_piper_api.services.embedding_service import EmbeddingService
 from prompt_piper_api.services.similarity_utils import cosine_similarity, lexical_overlap_score, tokenize
 
 _SECTION_TITLE = re.compile(
-    r"^(Mission|Context|Constraints|Style|Output contract|Acceptance criteria|"
-    r"Acceptance tests|Forbidden content or actions|Tools|Artifact rules)$",
+    r"^(Technical Context|Core Task and Scope|Inputs, Outputs, and Contracts|"
+    r"Architectural Rules and Constraints|Edge Cases and Error Strategy|"
+    r"Response Formatting|Tools|Artifact rules)$",
     re.IGNORECASE,
 )
 _DIVIDER = re.compile(r"^-+$")
@@ -36,12 +37,18 @@ _BINDING_CAPTURE_SLOTS: tuple[ConstraintSlot, ...] = (
     ConstraintSlot.TOKEN_BUDGET,
 )
 
-_LANGUAGE_ALIASES: dict[str, tuple[str, ...]] = {
-    "en": ("en", "english"),
-    "es": ("es", "spanish", "español"),
-    "fr": ("fr", "french", "français"),
-    "de": ("de", "german", "deutsch"),
-}
+_STRING_LEAVES: tuple[str, ...] = (
+    "core_task_scope.objective",
+    "core_task_scope.task_type",
+    "technical_context.environment",
+    "technical_context.dependency_policy",
+    "inputs_outputs_contracts.inputs",
+    "inputs_outputs_contracts.output_contract",
+    "architectural_rules.coding_style",
+    "edge_cases_error_strategy.failure_handling",
+    "response_formatting.explanation_level",
+    "response_formatting.verbosity",
+)
 
 
 def normalize_phrase_for_capture(phrase: str) -> str:
@@ -67,35 +74,16 @@ def collect_requirement_phrases(card: RequirementCard) -> list[str]:
     """Return each populated requirement phrase that must be reflected in the prompt body."""
     phrases: list[str] = []
 
-    string_fields = (
-        "objective",
-        "context_background",
-        "audience",
-        "persona_role",
-        "desired_output_shape",
-        "tone_style",
-        "verbosity",
-        "language",
-    )
-    for field_name in string_fields:
-        value = getattr(card, field_name, "")
+    for field_name in _STRING_LEAVES:
+        value = card.get_leaf(field_name)
         if isinstance(value, str) and value.strip():
             phrases.append(value.strip())
 
-    list_fields = (
-        "constraints",
-        "success_criteria",
-        "forbidden_content_actions",
-        "input_materials",
-        "example_outputs",
-        "edge_cases",
-    )
-    for field_name in list_fields:
-        values: list[str] = getattr(card, field_name)
+    for field_name in LIST_LEAF_FIELDS:
+        values: list[str] = card.get_leaf(field_name)
         phrases.extend(item.strip() for item in values if item.strip())
 
-    targets: OptimizationTargets = card.optimization_targets
-    for label, value in targets.model_dump().items():
+    for label, value in card.optimization_targets.model_dump().items():
         if value and str(value).strip():
             phrases.append(str(value).strip())
 
@@ -110,7 +98,11 @@ def collect_optimization_binding_phrases(
     phrases: list[str] = []
     for slot in _BINDING_CAPTURE_SLOTS:
         phrases.extend(graph.slots.get(slot.value, []))
-    for value in (card.context_background, card.tone_style, card.language):
+    for value in (
+        card.technical_context.environment,
+        card.architectural_rules.coding_style,
+        card.response_formatting.explanation_level,
+    ):
         if value.strip():
             phrases.append(value.strip())
     return dedupe_phrases(phrases)
@@ -175,14 +167,9 @@ class RequirementCaptureEvaluator:
         if normalized_phrase and normalized_phrase in normalized_body:
             return True
 
-        if self._language_alias_captured(phrase, lowered_body):
-            return True
-
         if chunks:
             normalized_chunks = [normalize_phrase_for_capture(chunk) for chunk in chunks]
-            best_lexical = max(
-                lexical_overlap_score(phrase, chunk) for chunk in chunks
-            )
+            best_lexical = max(lexical_overlap_score(phrase, chunk) for chunk in chunks)
             if best_lexical >= LEXICAL_CAPTURE_THRESHOLD:
                 return True
             best_normalized = max(
@@ -218,11 +205,3 @@ class RequirementCaptureEvaluator:
                 return True
 
         return False
-
-    @staticmethod
-    def _language_alias_captured(phrase: str, lowered_body: str) -> bool:
-        normalized = phrase.strip().lower()
-        aliases = _LANGUAGE_ALIASES.get(normalized)
-        if aliases is None:
-            return False
-        return any(alias in lowered_body for alias in aliases)

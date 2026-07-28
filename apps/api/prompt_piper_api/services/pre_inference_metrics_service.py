@@ -16,20 +16,26 @@ from prompt_piper_api.services.semantic_precision import SemanticPrecisionEvalua
 from prompt_piper_api.services.tokenizer_approx import estimate_token_cost
 
 _FIELD_SECTION_HINTS: dict[str, tuple[str, ...]] = {
-    "objective": ("mission", "objective"),
-    "context_background": ("background", "context"),
-    "audience": ("audience", "context"),
-    "persona_role": ("persona", "role", "context"),
-    "desired_output_shape": ("output contract", "output"),
-    "tone_style": ("style", "tone"),
-    "verbosity": ("verbosity", "style"),
-    "constraints": ("constraints",),
-    "success_criteria": ("acceptance", "success"),
-    "forbidden_content_actions": ("forbidden", "exclusions"),
-    "edge_cases": ("edge cases", "acceptance"),
-    "input_materials": ("input materials", "context"),
-    "example_outputs": ("example outputs", "output contract"),
-    "language": ("language", "context"),
+    "core_task_scope.objective": ("objective", "core task"),
+    "core_task_scope.task_type": ("task type", "core task"),
+    "core_task_scope.out_of_scope": ("out of scope", "core task"),
+    "technical_context.environment": ("environment", "technical context"),
+    "technical_context.integration_points": ("integration points", "technical context"),
+    "technical_context.dependency_policy": ("dependency policy", "technical context"),
+    "technical_context.forbidden_libraries": ("forbidden libraries", "technical context"),
+    "inputs_outputs_contracts.inputs": ("inputs", "inputs, outputs"),
+    "inputs_outputs_contracts.output_contract": ("output contract", "inputs, outputs"),
+    "inputs_outputs_contracts.examples": ("example", "inputs, outputs"),
+    "architectural_rules.design_patterns": ("design patterns", "architectural"),
+    "architectural_rules.coding_style": ("coding style", "architectural"),
+    "architectural_rules.non_functional": ("non-functional", "architectural"),
+    "edge_cases_error_strategy.failure_handling": ("failure handling", "edge cases"),
+    "edge_cases_error_strategy.bad_inputs": ("bad inputs", "edge cases"),
+    "edge_cases_error_strategy.edge_cases": ("edge case", "edge cases"),
+    "response_formatting.explanation_level": ("explanation level", "response formatting"),
+    "response_formatting.verbosity": ("verbosity", "response formatting"),
+    "response_formatting.extra_artifacts": ("extra artifacts", "response formatting"),
+    "optimization_targets": ("optimization", "technical context"),
 }
 
 
@@ -119,14 +125,25 @@ class PreInferenceMetricsService:
 
     @staticmethod
     def _field_marked_unspecified(body: str, card: RequirementCard, field_name: str) -> bool:
-        value = getattr(card, field_name, "")
-        if isinstance(value, list):
-            if value:
+        if field_name == "optimization_targets":
+            targets = card.optimization_targets.model_dump()
+            if any(value is not None and str(value).strip() for value in targets.values()):
                 return True
-        elif isinstance(value, str) and value.strip():
-            return True
+        else:
+            try:
+                value = card.get_leaf(field_name)
+            except ValueError:
+                value = ""
+            if isinstance(value, list):
+                if value:
+                    return True
+            elif isinstance(value, str) and value.strip():
+                return True
 
-        hints = _FIELD_SECTION_HINTS.get(field_name, (field_name.replace("_", " "),))
+        hints = _FIELD_SECTION_HINTS.get(
+            field_name,
+            (field_name.split(".")[-1].replace("_", " "),),
+        )
         for hint in hints:
             pattern = re.compile(
                 rf"{re.escape(hint)}[^\n]*\b{re.escape(UNSPECIFIED)}\b",
@@ -147,12 +164,21 @@ class PreInferenceMetricsService:
             return 0.0
 
         score = 0.0
-        if any(line.lower().startswith(("mission", "context", "constraints")) for line in lines):
+        if any(
+            line.lower().startswith(
+                ("technical context", "core task", "architectural", "inputs")
+            )
+            for line in lines
+        ):
             score += 0.4
         imperative = sum(
             1
             for line in lines
-            if re.match(r"^(keep|use|meet|avoid|do not|provide|summarize|write)\b", line, re.I)
+            if re.match(
+                r"^(keep|use|meet|avoid|do not|provide|implement|write|return|raise)\b",
+                line,
+                re.I,
+            )
         )
         score += min(0.3, imperative * 0.1)
         avg_len = sum(len(line.split()) for line in lines) / len(lines)

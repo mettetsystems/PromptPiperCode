@@ -1,5 +1,7 @@
 # Local setup
 
+PromptPiperCode local development and Podman deployment.
+
 ## Prerequisites
 
 - Python 3.12+

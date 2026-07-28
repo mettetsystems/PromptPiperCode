@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 import yaml
-from prompt_piper.demo.runner import build_demo_service, run_implementation_report_demo
+from prompt_piper.demo.runner import build_demo_service, run_coding_prompt_demo
 from prompt_piper.demo.scenario import DemoScenario, load_scenario
 from prompt_piper_api.domain.enums import SessionState
 from tests.clarification_helpers import drive_session_to_edit
@@ -28,7 +28,7 @@ def demo_scenario() -> DemoScenario:
     return load_scenario()
 
 
-def test_implementation_report_demo_end_to_end(
+def test_coding_prompt_demo_end_to_end(
     demo_registry_path: Path,
     demo_artifacts_path: Path,
     demo_similarity_index_path: Path,
@@ -45,7 +45,13 @@ def test_implementation_report_demo_end_to_end(
         title=demo_scenario.title,
     )
     session_id = created.record.session.id
-    assert created.clarification_field == "audience"
+    assert created.clarification_field in {
+        "core_task_scope.objective",
+        "core_task_scope.task_type",
+        "technical_context.environment",
+        "inputs_outputs_contracts.output_contract",
+        "inputs_outputs_contracts.inputs",
+    }
 
     drive_session_to_edit(
         service,
@@ -108,7 +114,7 @@ def test_demo_runner_module(
     demo_artifacts_path: Path,
     demo_similarity_index_path: Path,
 ) -> None:
-    result = run_implementation_report_demo(
+    result = run_coding_prompt_demo(
         registry_path=demo_registry_path,
         artifacts_path=demo_artifacts_path,
         similarity_index_path=demo_similarity_index_path,

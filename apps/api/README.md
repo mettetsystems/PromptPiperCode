@@ -1,6 +1,6 @@
 # API package (`apps/api/`)
 
-Python backend for Prompt Piper. Installed as editable package `prompt-piper-api` with two code roots:
+Python backend for PromptPiperCode. Installed as editable package `prompt-piper-api` with two code roots:
 
 | Path | Package | Purpose |
 |------|---------|---------|

@@ -36,7 +36,7 @@ export function NewSessionPage() {
     <div className="page narrow">
       <PageHeader
         title="New session"
-        subtitle="Describe the prompt you want to design. Prompt Piper will extract a requirement card and ask up to two clarifying questions."
+        subtitle="Describe the coding prompt you want to design. PromptPiperCode will extract six coding dimensions and ask clarifying questions."
       />
       <Panel>
         <form className="stack-form" onSubmit={handleSubmit}>
@@ -46,7 +46,7 @@ export function NewSessionPage() {
               rows={8}
               value={request}
               onChange={(event) => setRequest(event.target.value)}
-              placeholder="Example: Draft a prompt that summarizes weekly engineering status for leadership review."
+              placeholder="Example: Write a prompt for implementing a FastAPI endpoint with Pydantic v2 models, matching existing service patterns, returning typed JSON, with pytest coverage."
               required
             />
           </label>
@@ -56,7 +56,7 @@ export function NewSessionPage() {
               type="text"
               value={title}
               onChange={(event) => setTitle(event.target.value)}
-              placeholder="Weekly status update prompt"
+              placeholder="FastAPI feature coding prompt"
             />
           </label>
           {errorMessage && <ErrorBanner message={errorMessage} />}

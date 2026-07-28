@@ -1,13 +1,13 @@
 # Privacy model
 
-Prompt Piper is designed so prompt content stays on your machine unless you take an explicit, gated action to send an approved optimized prompt to an external model.
+PromptPiperCode is designed so prompt content stays on your machine unless you take an explicit, gated action to send an approved optimized prompt to an external model.
 
 ## What stays local
 
 | Data | Location | Sent externally? |
 |------|----------|-------------------|
 | Session state and draft versions | API process memory (v1) | Never |
-| RequirementCard | Session + registry JSON | Never (unless you copy files) |
+| RequirementCard (six coding dimensions) | Session + registry JSON / coding_prompt_spec | Never (unless you copy files) |
 | Canonical prompt text | `data/registry/{prompt_id}/` | Never by default |
 | Optimized prompt text | `data/artifacts/{prompt_id}/` | Only via explicit send-to-inference |
 | Similarity embeddings | JSON index or local DB | Never |
@@ -72,7 +72,7 @@ What is **not** sent:
 - Raw initial user request (unless it remains in optimized text)
 - Full clarification transcript
 - Non-canonical draft versions
-- RequirementCard as a separate payload
+- RequirementCard / coding_prompt_spec as a separate payload
 - Similarity index or registry metadata
 
 Settings introspection: `GET /settings/inference` returns enabled flags without exposing API keys.
@@ -108,7 +108,7 @@ Event schema (`ExternalInferenceAuditEvent`):
 {
   "timestamp": "2026-06-15T22:40:00+00:00",
   "session_id": "59ffd96f-aec9-47fa-9f4b-e1d672a9b4fd",
-  "prompt_id": "implementation-report-prompt-59ffd96f",
+  "prompt_id": "fastapi-user-create-coding-prompt-59ffd96f",
   "version": 3,
   "outcome": "blocked",
   "block_reason": "external_inference_disabled",
@@ -139,7 +139,7 @@ Failed gate → HTTP 409; no artifacts, no export, no inference.
 
 - Store `PROMPT_PIPER_EXTERNAL_API_KEY` and local API keys in `.env` (gitignored).
 - Never commit secrets into `data/registry` prompt files.
-- Pushing `data/registry` to a remote Git remote is a **user decision**; Prompt Piper does not push automatically.
+- Pushing `data/registry` to a remote Git remote is a **user decision**; PromptPiperCode does not push automatically.
 
 ## Network assumptions
 

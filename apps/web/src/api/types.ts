@@ -17,21 +17,50 @@ export interface OptimizationTargets {
   deconfliction?: string | null;
 }
 
-export interface RequirementCard {
+export interface TechnicalContext {
+  environment: string;
+  integration_points: string[];
+  dependency_policy: string;
+  forbidden_libraries: string[];
+}
+
+export interface CoreTaskScope {
+  task_type: string;
   objective: string;
-  context_background: string;
-  audience: string;
-  persona_role: string;
-  input_materials: string[];
-  constraints: string[];
-  desired_output_shape: string;
-  tone_style: string;
-  verbosity: string;
-  forbidden_content_actions: string[];
-  success_criteria: string[];
-  example_outputs: string[];
+  out_of_scope: string[];
+}
+
+export interface InputsOutputsContracts {
+  inputs: string;
+  output_contract: string;
+  examples: string[];
+}
+
+export interface ArchitecturalRules {
+  design_patterns: string[];
+  coding_style: string;
+  non_functional: string[];
+}
+
+export interface EdgeCasesErrorStrategy {
+  failure_handling: string;
+  bad_inputs: string[];
   edge_cases: string[];
-  language: string;
+}
+
+export interface ResponseFormatting {
+  explanation_level: string;
+  verbosity: string;
+  extra_artifacts: string[];
+}
+
+export interface RequirementCard {
+  technical_context: TechnicalContext;
+  core_task_scope: CoreTaskScope;
+  inputs_outputs_contracts: InputsOutputsContracts;
+  architectural_rules: ArchitecturalRules;
+  edge_cases_error_strategy: EdgeCasesErrorStrategy;
+  response_formatting: ResponseFormatting;
   optimization_targets: OptimizationTargets;
   unresolved_fields: string[];
 }

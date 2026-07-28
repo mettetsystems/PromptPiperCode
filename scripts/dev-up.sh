@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Start the full local Prompt Piper Podman stack (postgres + api + web).
+# Start the full local PromptPiperCode Podman stack (postgres + api + web).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -40,14 +40,14 @@ if [[ -x "${ROOT}/apps/api/.venv/bin/python" ]]; then
   fi
 fi
 
-echo "Building and starting Prompt Piper containers..."
+echo "Building and starting PromptPiperCode containers..."
 podman compose -f infra/podman-compose.yml up -d --build
 
 "${ROOT}/scripts/init-db.sh"
 
 cat <<EOF
 
-Prompt Piper is running locally.
+PromptPiperCode is running locally.
 
   Web UI:  http://127.0.0.1:5173
   API:     http://127.0.0.1:8000

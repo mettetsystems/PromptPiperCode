@@ -9,7 +9,7 @@ from prompt_piper.setup.wizard import run_setup_wizard
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Prompt Piper interactive setup wizard (local model configuration).",
+        description="PromptPiperCode interactive setup wizard (local model configuration).",
     )
     parser.add_argument(
         "--non-interactive",

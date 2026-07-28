@@ -1,40 +1,68 @@
 import json
 import re
 
-from prompt_piper_api.domain.requirement_card import RequirementCard
+from prompt_piper_api.domain.requirement_card import LIST_LEAF_FIELDS, RequirementCard
 from prompt_piper_api.llm.base import ChatMessage, LLMClient
 from prompt_piper_api.llm.fallback import with_llm_fallback
 from prompt_piper_api.services.clarification_question_ranker import is_unspecified_answer
 
 _LINE_PATTERNS: list[tuple[re.Pattern[str], str]] = [
-    (re.compile(r"^audience:\s*(.+)$", re.IGNORECASE), "audience"),
-    (re.compile(r"^for:\s*(.+)$", re.IGNORECASE), "audience"),
-    (re.compile(r"^tone:\s*(.+)$", re.IGNORECASE), "tone_style"),
-    (re.compile(r"^style:\s*(.+)$", re.IGNORECASE), "tone_style"),
-    (re.compile(r"^output(?:\s+shape)?:\s*(.+)$", re.IGNORECASE), "desired_output_shape"),
-    (re.compile(r"^format:\s*(.+)$", re.IGNORECASE), "desired_output_shape"),
-    (re.compile(r"^constraint:\s*(.+)$", re.IGNORECASE), "constraints"),
-    (re.compile(r"^constraints:\s*(.+)$", re.IGNORECASE), "constraints"),
-    (re.compile(r"^avoid:\s*(.+)$", re.IGNORECASE), "forbidden_content_actions"),
-    (re.compile(r"^success:\s*(.+)$", re.IGNORECASE), "success_criteria"),
-    (re.compile(r"^language:\s*(.+)$", re.IGNORECASE), "language"),
-    (re.compile(r"^inputs?:\s*(.+)$", re.IGNORECASE), "input_materials"),
-    (re.compile(r"^materials:\s*(.+)$", re.IGNORECASE), "input_materials"),
-    (re.compile(r"^objective:\s*(.+)$", re.IGNORECASE), "objective"),
-    (re.compile(r"^goal:\s*(.+)$", re.IGNORECASE), "objective"),
-    (re.compile(r"^context:\s*(.+)$", re.IGNORECASE), "context_background"),
-    (re.compile(r"^background:\s*(.+)$", re.IGNORECASE), "context_background"),
-    (re.compile(r"^persona:\s*(.+)$", re.IGNORECASE), "persona_role"),
-    (re.compile(r"^role:\s*(.+)$", re.IGNORECASE), "persona_role"),
-    (re.compile(r"^verbosity:\s*(.+)$", re.IGNORECASE), "verbosity"),
-    (re.compile(r"^length:\s*(.+)$", re.IGNORECASE), "verbosity"),
-    (re.compile(r"^examples?:\s*(.+)$", re.IGNORECASE), "example_outputs"),
-    (re.compile(r"^edge cases:\s*(.+)$", re.IGNORECASE), "edge_cases"),
+    (re.compile(r"^objective:\s*(.+)$", re.IGNORECASE), "core_task_scope.objective"),
+    (re.compile(r"^goal:\s*(.+)$", re.IGNORECASE), "core_task_scope.objective"),
+    (re.compile(r"^task(?:\s+type)?:\s*(.+)$", re.IGNORECASE), "core_task_scope.task_type"),
+    (re.compile(r"^out of scope:\s*(.+)$", re.IGNORECASE), "core_task_scope.out_of_scope"),
+    (re.compile(r"^environment:\s*(.+)$", re.IGNORECASE), "technical_context.environment"),
+    (re.compile(r"^stack:\s*(.+)$", re.IGNORECASE), "technical_context.environment"),
+    (
+        re.compile(r"^integration(?:\s+points)?:\s*(.+)$", re.IGNORECASE),
+        "technical_context.integration_points",
+    ),
+    (
+        re.compile(r"^dependenc(?:y|ies)(?:\s+policy)?:\s*(.+)$", re.IGNORECASE),
+        "technical_context.dependency_policy",
+    ),
+    (
+        re.compile(r"^forbidden(?:\s+libraries)?:\s*(.+)$", re.IGNORECASE),
+        "technical_context.forbidden_libraries",
+    ),
+    (re.compile(r"^inputs?:\s*(.+)$", re.IGNORECASE), "inputs_outputs_contracts.inputs"),
+    (
+        re.compile(r"^output(?:\s+contract|\s+shape)?:\s*(.+)$", re.IGNORECASE),
+        "inputs_outputs_contracts.output_contract",
+    ),
+    (re.compile(r"^format:\s*(.+)$", re.IGNORECASE), "inputs_outputs_contracts.output_contract"),
+    (re.compile(r"^examples?:\s*(.+)$", re.IGNORECASE), "inputs_outputs_contracts.examples"),
+    (
+        re.compile(r"^design patterns?:\s*(.+)$", re.IGNORECASE),
+        "architectural_rules.design_patterns",
+    ),
+    (re.compile(r"^style:\s*(.+)$", re.IGNORECASE), "architectural_rules.coding_style"),
+    (re.compile(r"^coding style:\s*(.+)$", re.IGNORECASE), "architectural_rules.coding_style"),
+    (re.compile(r"^constraint:\s*(.+)$", re.IGNORECASE), "architectural_rules.non_functional"),
+    (re.compile(r"^constraints:\s*(.+)$", re.IGNORECASE), "architectural_rules.non_functional"),
+    (re.compile(r"^nfr:\s*(.+)$", re.IGNORECASE), "architectural_rules.non_functional"),
+    (
+        re.compile(r"^failure(?:\s+handling)?:\s*(.+)$", re.IGNORECASE),
+        "edge_cases_error_strategy.failure_handling",
+    ),
+    (re.compile(r"^errors?:\s*(.+)$", re.IGNORECASE), "edge_cases_error_strategy.failure_handling"),
+    (re.compile(r"^bad inputs?:\s*(.+)$", re.IGNORECASE), "edge_cases_error_strategy.bad_inputs"),
+    (re.compile(r"^edge cases:\s*(.+)$", re.IGNORECASE), "edge_cases_error_strategy.edge_cases"),
+    (
+        re.compile(r"^explanation(?:\s+level)?:\s*(.+)$", re.IGNORECASE),
+        "response_formatting.explanation_level",
+    ),
+    (re.compile(r"^verbosity:\s*(.+)$", re.IGNORECASE), "response_formatting.verbosity"),
+    (re.compile(r"^length:\s*(.+)$", re.IGNORECASE), "response_formatting.verbosity"),
+    (
+        re.compile(r"^extra artifacts?:\s*(.+)$", re.IGNORECASE),
+        "response_formatting.extra_artifacts",
+    ),
 ]
 
 
 class RequirementCardExtractor:
-    """Maps free-text requests onto RequirementCard fields with LLM + rule fallback."""
+    """Maps free-text requests onto coding RequirementCard leaves with LLM + rule fallback."""
 
     def __init__(self, llm: LLMClient | None = None) -> None:
         self._llm = llm
@@ -71,26 +99,7 @@ class RequirementCardExtractor:
 
     def _mark_unspecified(self, card: RequirementCard, field_name: str) -> None:
         """Keep a field empty and explicitly unresolved rather than inventing a value."""
-        if field_name == "optimization_targets":
-            card.optimization_targets.richness = None
-            card.optimization_targets.density = None
-            card.optimization_targets.efficiency = None
-            card.optimization_targets.denoising = None
-            card.optimization_targets.deconfliction = None
-        elif field_name in {
-            "constraints",
-            "success_criteria",
-            "forbidden_content_actions",
-            "input_materials",
-            "example_outputs",
-            "edge_cases",
-        }:
-            setattr(card, field_name, [])
-        elif field_name == "language":
-            card.language = ""
-        else:
-            setattr(card, field_name, "")
-
+        card.clear_leaf(field_name)
         if field_name not in card.unresolved_fields:
             card.unresolved_fields.append(field_name)
 
@@ -100,11 +109,13 @@ class RequirementCardExtractor:
                 ChatMessage(
                     role="system",
                     content=(
-                        "Extract prompt requirements into JSON matching RequirementCard fields: "
-                        "objective, context_background, audience, persona_role, input_materials, "
-                        "constraints, desired_output_shape, tone_style, verbosity, "
-                        "forbidden_content_actions, success_criteria, example_outputs, "
-                        "edge_cases, language."
+                        "Extract coding prompt requirements into JSON matching RequirementCard: "
+                        "technical_context {environment, integration_points, dependency_policy, "
+                        "forbidden_libraries}, core_task_scope {task_type, objective, out_of_scope}, "
+                        "inputs_outputs_contracts {inputs, output_contract, examples}, "
+                        "architectural_rules {design_patterns, coding_style, non_functional}, "
+                        "edge_cases_error_strategy {failure_handling, bad_inputs, edge_cases}, "
+                        "response_formatting {explanation_level, verbosity, extra_artifacts}."
                     ),
                 ),
                 ChatMessage(role="user", content=initial_request),
@@ -113,8 +124,8 @@ class RequirementCardExtractor:
         )
         payload = json.loads(response.content)
         card = RequirementCard.model_validate(payload)
-        if not card.objective:
-            card.objective = initial_request.strip()[:500]
+        if not card.core_task_scope.objective:
+            card.core_task_scope.objective = initial_request.strip()[:500]
         return card
 
     def _extract_rule_based(self, initial_request: str) -> RequirementCard:
@@ -139,40 +150,40 @@ class RequirementCardExtractor:
             if not matched:
                 objective_lines.append(line)
 
-        if not card.objective and objective_lines:
-            card.objective = " ".join(objective_lines).strip()
+        if not card.core_task_scope.objective and objective_lines:
+            card.core_task_scope.objective = " ".join(objective_lines).strip()
 
-        if re.search(r"\bimplementation reports?\b", initial_request, re.I):
-            card.objective = (
-                "Help an internal AI tool generate implementation reports for new features."
-            )
+        lowered = initial_request.lower()
+        if not card.core_task_scope.task_type:
+            if re.search(r"\b(test|pytest|unit test|coverage)\b", lowered):
+                card.core_task_scope.task_type = "generating tests"
+            elif re.search(r"\b(refactor|performance|optimize)\b", lowered):
+                card.core_task_scope.task_type = "refactor legacy code"
+            elif re.search(r"\b(debug|bug|fix|error)\b", lowered):
+                card.core_task_scope.task_type = "debugging an issue"
+            elif re.search(r"\b(feature|implement|add|endpoint|api)\b", lowered):
+                card.core_task_scope.task_type = "new feature logic"
 
-        if card.language == "en" and re.search(
-            r"\b(español|spanish|français|french|deutsch|german)\b", initial_request, re.I
-        ):
-            if re.search(r"\b(spanish|español)\b", initial_request, re.I):
-                card.language = "es"
-            elif re.search(r"\bfrench\b", initial_request, re.I):
-                card.language = "fr"
-            elif re.search(r"\bgerman\b", initial_request, re.I):
-                card.language = "de"
+        if not card.technical_context.environment:
+            if re.search(r"\bfastapi\b", lowered) or re.search(r"\bpydantic\b", lowered):
+                card.technical_context.environment = (
+                    "Python with FastAPI and Pydantic (match request details)"
+                )
+            elif re.search(r"\btypescript\b", lowered) or re.search(r"\breact\b", lowered):
+                card.technical_context.environment = "TypeScript / React (match request details)"
+            elif re.search(r"\bpython\b", lowered):
+                card.technical_context.environment = "Python (match request details)"
 
         return card
 
     def _assign(self, card: RequirementCard, field_name: str, value: str) -> None:
-        if field_name in {
-            "constraints",
-            "success_criteria",
-            "forbidden_content_actions",
-            "input_materials",
-            "example_outputs",
-            "edge_cases",
-        }:
+        if field_name in LIST_LEAF_FIELDS:
             items = [part.strip() for part in re.split(r"[;\n]|,(?!\s)", value) if part.strip()]
-            current: list[str] = getattr(card, field_name)
+            current: list[str] = list(card.get_leaf(field_name))
             for item in items:
                 if item not in current:
                     current.append(item)
+            card.set_leaf(field_name, current)
             return
 
-        setattr(card, field_name, value)
+        card.set_leaf(field_name, value)

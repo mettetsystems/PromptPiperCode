@@ -3,172 +3,221 @@ import textwrap
 from pydantic import BaseModel, Field, field_validator
 
 from prompt_piper_api.domain.limits import MAX_CLARIFICATION_QUESTIONS
-from prompt_piper_api.domain.requirement_card import REQUIREMENT_CARD_FIELD_NAMES, RequirementCard
+from prompt_piper_api.domain.requirement_card import LEAF_FIELD_NAMES, RequirementCard
 from prompt_piper_api.llm.base import LLMClient
 
 REQUIRED_CLARIFICATION_COUNT = MAX_CLARIFICATION_QUESTIONS
 
 CLARIFICATION_FIELD_PRIORITY: tuple[str, ...] = (
-    "objective",
-    "desired_output_shape",
-    "audience",
-    "constraints",
-    "success_criteria",
-    "tone_style",
-    "forbidden_content_actions",
-    "input_materials",
-    "language",
-    "context_background",
-    "persona_role",
-    "verbosity",
-    "example_outputs",
-    "edge_cases",
-    "optimization_targets",
-)
-
-IMPLEMENTATION_REPORT_FIELD_PRIORITY: tuple[str, ...] = (
-    "audience",
-    "desired_output_shape",
-    "constraints",
-    "success_criteria",
-    "tone_style",
-    "forbidden_content_actions",
-    "input_materials",
-    "language",
-    "context_background",
-    "persona_role",
-    "verbosity",
-    "example_outputs",
-    "edge_cases",
+    "core_task_scope.objective",
+    "core_task_scope.task_type",
+    "technical_context.environment",
+    "inputs_outputs_contracts.output_contract",
+    "inputs_outputs_contracts.inputs",
+    "architectural_rules.coding_style",
+    "architectural_rules.non_functional",
+    "edge_cases_error_strategy.failure_handling",
+    "core_task_scope.out_of_scope",
+    "technical_context.dependency_policy",
+    "technical_context.integration_points",
+    "architectural_rules.design_patterns",
+    "edge_cases_error_strategy.bad_inputs",
+    "edge_cases_error_strategy.edge_cases",
+    "response_formatting.explanation_level",
+    "response_formatting.verbosity",
+    "response_formatting.extra_artifacts",
+    "inputs_outputs_contracts.examples",
+    "technical_context.forbidden_libraries",
     "optimization_targets",
 )
 
 REFINEMENT_FIELD_PRIORITY: tuple[str, ...] = (
-    "desired_output_shape",
-    "success_criteria",
-    "tone_style",
-    "constraints",
-    "input_materials",
-    "verbosity",
-    "example_outputs",
-    "edge_cases",
+    "inputs_outputs_contracts.output_contract",
+    "architectural_rules.non_functional",
+    "edge_cases_error_strategy.failure_handling",
+    "response_formatting.explanation_level",
+    "technical_context.integration_points",
+    "inputs_outputs_contracts.examples",
+    "edge_cases_error_strategy.edge_cases",
 )
 
 FOCUSED_PROMPTS: dict[str, str] = {
-    "objective": "what should this prompt primarily accomplish?",
-    "context_background": "what background or domain context should the model assume?",
-    "desired_output_shape": "what shape or format should the output take?",
-    "audience": "who is the output for?",
-    "persona_role": "what role or persona should the model adopt?",
-    "constraints": "what hard constraints should the prompt enforce?",
-    "success_criteria": "how will you know the output succeeded?",
-    "tone_style": "what tone or style should the output use?",
-    "verbosity": "how long or detailed should responses be?",
-    "forbidden_content_actions": "what must the model avoid doing or saying?",
-    "edge_cases": "what edge cases or failure modes must be handled?",
-    "input_materials": "what input materials will be provided at runtime?",
-    "example_outputs": "what example outputs or formatting references should guide the model?",
-    "language": "what language should the prompt and output use?",
+    "core_task_scope.objective": "what single coding job should this prompt accomplish?",
+    "core_task_scope.task_type": "is this writing a feature, refactoring, debugging, or generating tests?",
+    "core_task_scope.out_of_scope": "what should the model explicitly not try to solve or include?",
+    "technical_context.environment": (
+        "what is the precise stack (language version, framework, key dependencies)?"
+    ),
+    "technical_context.integration_points": (
+        "what existing functions, types, schemas, or names must the output match?"
+    ),
+    "technical_context.dependency_policy": (
+        "stdlib only, allow listed third-party packages, or open package use?"
+    ),
+    "technical_context.forbidden_libraries": "which libraries or packages are forbidden?",
+    "inputs_outputs_contracts.inputs": (
+        "what do the inputs look like (params, payloads, or sample structures)?"
+    ),
+    "inputs_outputs_contracts.output_contract": (
+        "what exact return structure is required (JSON schema, SQL, interface, object)?"
+    ),
+    "inputs_outputs_contracts.examples": "what example inputs or outputs should guide the model?",
+    "architectural_rules.design_patterns": (
+        "which design patterns should it follow (OOP, FP, repository, async/await)?"
+    ),
+    "architectural_rules.coding_style": "what coding style or design approach should it follow?",
+    "architectural_rules.non_functional": (
+        "any memory, complexity, thread-safety, or security requirements?"
+    ),
+    "edge_cases_error_strategy.failure_handling": (
+        "how should failures be handled (exceptions, null, log, retry)?"
+    ),
+    "edge_cases_error_strategy.bad_inputs": (
+        "what bad inputs will it face (null, empty lists, rate limits, wrong types)?"
+    ),
+    "edge_cases_error_strategy.edge_cases": "what edge cases or exceptions must be handled?",
+    "response_formatting.explanation_level": (
+        "code only, brief rationale, or step-by-step breakdown before the code?"
+    ),
+    "response_formatting.verbosity": "how long or detailed should the response be?",
+    "response_formatting.extra_artifacts": (
+        "should tests, comments, or other artifacts be appended?"
+    ),
     "optimization_targets": "which optimization goals matter most right now?",
 }
 
 QUICK_REPLY_OPTIONS: dict[str, tuple[str, ...]] = {
-    "objective": (
-        "summarize source material",
-        "generate new copy or content",
-        "extract structured facts",
-        "coach or guide a workflow",
+    "core_task_scope.objective": (
+        "implement a new feature",
+        "refactor for performance or clarity",
+        "debug a failing behavior",
+        "generate a test suite",
         "unspecified",
     ),
-    "context_background": (
-        "internal product or codebase",
-        "customer support workflow",
-        "research or analysis task",
-        "general knowledge task",
+    "core_task_scope.task_type": (
+        "new feature logic",
+        "refactor legacy code",
+        "debugging an issue",
+        "generating tests",
         "unspecified",
     ),
-    "desired_output_shape": (
-        "bulleted summary",
-        "short paragraph",
-        "structured JSON",
-        "markdown report",
+    "core_task_scope.out_of_scope": (
+        "no unrelated refactors",
+        "no dependency upgrades",
+        "no UI or docs changes",
+        "no speculative features",
         "unspecified",
     ),
-    "audience": (
-        "engineering team",
-        "executive stakeholders",
-        "mixed technical and business audience",
-        "general end users",
+    "technical_context.environment": (
+        "Python 3.12 with FastAPI and Pydantic v2",
+        "TypeScript with React and Vite",
+        "Go with standard library only",
+        "match the existing repo stack",
         "unspecified",
     ),
-    "persona_role": (
-        "helpful assistant",
-        "senior subject-matter expert",
-        "technical writer",
-        "support agent",
+    "technical_context.integration_points": (
+        "existing service and route names",
+        "shared types and schemas",
+        "database models and migrations",
+        "no specific symbols required",
         "unspecified",
     ),
-    "constraints": (
-        "keep it under 500 words",
-        "cite sources only",
-        "no speculative claims",
-        "follow company style guide",
+    "technical_context.dependency_policy": (
+        "standard library only",
+        "allow already-used packages",
+        "may add well-known packages",
+        "prefer existing project deps",
         "unspecified",
     ),
-    "success_criteria": (
-        "captures key risks",
-        "actionable next steps included",
-        "factually grounded in inputs",
-        "easy to scan quickly",
+    "technical_context.forbidden_libraries": (
+        "no new heavy frameworks",
+        "no deprecated packages",
+        "no GPL-only dependencies",
+        "none forbidden",
         "unspecified",
     ),
-    "tone_style": (
-        "neutral and professional",
-        "concise and direct",
-        "friendly and approachable",
-        "formal and board-ready",
+    "inputs_outputs_contracts.inputs": (
+        "function parameters from the call site",
+        "HTTP request JSON body",
+        "CLI args and stdin",
+        "existing typed objects",
         "unspecified",
     ),
-    "verbosity": (
-        "very concise (under 200 words)",
-        "moderate detail",
-        "comprehensive and thorough",
-        "adjustable by user request",
+    "inputs_outputs_contracts.output_contract": (
+        "typed function return value",
+        "JSON schema object",
+        "raw SQL query string",
+        "TypeScript interface plus implementation",
         "unspecified",
     ),
-    "forbidden_content_actions": (
-        "no legal advice",
-        "no invented metrics",
-        "no personal data",
-        "no unsafe instructions",
-        "unspecified",
-    ),
-    "edge_cases": (
-        "missing or incomplete inputs",
-        "conflicting source material",
-        "ambiguous user intent",
-        "out-of-scope requests",
-        "unspecified",
-    ),
-    "input_materials": (
-        "user-provided notes",
-        "uploaded documents",
-        "meeting transcripts",
-        "ticket or issue text",
-        "unspecified",
-    ),
-    "example_outputs": (
-        "one short sample paragraph",
-        "bulleted example with headings",
+    "inputs_outputs_contracts.examples": (
+        "one happy-path example",
+        "request and response pair",
         "JSON schema example",
         "no examples needed",
         "unspecified",
     ),
-    "language": (
-        "english",
-        "spanish",
-        "french",
-        "german",
+    "architectural_rules.design_patterns": (
+        "repository pattern",
+        "functional pure helpers",
+        "async/await throughout",
+        "object-oriented services",
+        "unspecified",
+    ),
+    "architectural_rules.coding_style": (
+        "match existing project style",
+        "prefer small pure functions",
+        "explicit types and validation",
+        "idiomatic for the language",
+        "unspecified",
+    ),
+    "architectural_rules.non_functional": (
+        "O(n) time or better",
+        "sanitize inputs against injection",
+        "thread-safe shared state",
+        "fail fast on invalid input",
+        "unspecified",
+    ),
+    "edge_cases_error_strategy.failure_handling": (
+        "raise custom exceptions",
+        "return None or null",
+        "log a warning and continue",
+        "retry with backoff",
+        "unspecified",
+    ),
+    "edge_cases_error_strategy.bad_inputs": (
+        "null or missing fields",
+        "empty lists or strings",
+        "rate-limit responses",
+        "unexpected data types",
+        "unspecified",
+    ),
+    "edge_cases_error_strategy.edge_cases": (
+        "empty input collection",
+        "partial failure mid-batch",
+        "duplicate keys or ids",
+        "timeouts and cancellations",
+        "unspecified",
+    ),
+    "response_formatting.explanation_level": (
+        "code only with inline comments",
+        "brief rationale then code",
+        "step-by-step breakdown before code",
+        "code plus test coverage appended",
+        "unspecified",
+    ),
+    "response_formatting.verbosity": (
+        "very concise",
+        "moderate detail",
+        "comprehensive and thorough",
+        "adjustable by follow-up",
+        "unspecified",
+    ),
+    "response_formatting.extra_artifacts": (
+        "unit tests",
+        "usage example",
+        "migration notes",
+        "no extra artifacts",
         "unspecified",
     ),
     "optimization_targets": (
@@ -184,10 +233,8 @@ UNSPECIFIED_ANSWERS = frozenset({"unspecified", "skip", "unknown", "not sure", "
 
 
 def clarification_field_priority(card: RequirementCard) -> tuple[str, ...]:
-    """Field order for clarification; domain-specific overrides when detected."""
-    objective = card.objective.lower()
-    if "implementation report" in objective:
-        return IMPLEMENTATION_REPORT_FIELD_PRIORITY
+    """Field order for clarification (coding dimensions)."""
+    del card  # Priority is fixed for the coding workbench.
     return CLARIFICATION_FIELD_PRIORITY
 
 
@@ -220,14 +267,14 @@ class ClarificationQuestion(BaseModel):
 
 
 class ClarificationQuestionRanker:
-    """Ranks missing requirement-card fields and builds one quick question at a time."""
+    """Ranks missing coding-dimension leaves and builds one quick question at a time."""
 
     def __init__(self, llm: LLMClient | None = None) -> None:
         self._llm = llm
 
     def missing_fields(self, card: RequirementCard) -> list[str]:
         priority = clarification_field_priority(card)
-        missing = [field for field in priority if self._is_missing(card, field)]
+        missing = [field for field in priority if card.is_leaf_missing(field)]
         card.mark_unresolved(*missing)
         return missing
 
@@ -287,6 +334,7 @@ class ClarificationQuestionRanker:
         card: RequirementCard | None = None,
         last_answer: str | None = None,
     ) -> ClarificationQuestion:
+        del card, last_answer
         prompt = FOCUSED_PROMPTS[field_name]
         quick_reply_options = list(QUICK_REPLY_OPTIONS[field_name])
         question = format_clarification_question(
@@ -306,21 +354,9 @@ class ClarificationQuestionRanker:
         )
 
     def _is_missing(self, card: RequirementCard, field_name: str) -> bool:
-        if field_name not in REQUIREMENT_CARD_FIELD_NAMES:
+        if field_name not in LEAF_FIELD_NAMES:
             return False
-        if field_name in card.unresolved_fields:
-            return True
-        if field_name == "optimization_targets":
-            targets = card.optimization_targets.model_dump()
-            return all(value is None for value in targets.values())
-        value = getattr(card, field_name)
-        if isinstance(value, str):
-            if field_name == "language":
-                return not value.strip()
-            return not value.strip()
-        if isinstance(value, list):
-            return len(value) == 0
-        return False
+        return card.is_leaf_missing(field_name)
 
 
 def format_clarification_question(

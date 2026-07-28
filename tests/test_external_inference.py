@@ -99,17 +99,21 @@ def service(
 def _sample_body() -> str:
     return "\n".join(
         [
-            "Mission",
-            "-------",
-            "Summarize weekly engineering status for leadership review.",
+            "Technical Context",
+            "-----------------",
+            "Environment: Python with FastAPI and Pydantic",
             "",
-            "Constraints",
-            "---------------",
+            "Core Task and Scope",
+            "-------------------",
+            "Objective: Add FastAPI endpoint for weekly engineering status summaries.",
+            "",
+            "Architectural Rules and Constraints",
+            "-----------------------------------",
             "Keep the response within 300 words.",
             "",
-            "Output contract",
-            "----------------",
-            "Bulleted summary with risks and next steps.",
+            "Inputs, Outputs, and Contracts",
+            "------------------------------",
+            "Output contract: JSON with blockers, owners, and next steps.",
         ]
     )
 

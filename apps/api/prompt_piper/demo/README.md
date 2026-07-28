@@ -1,18 +1,11 @@
 # Demo runner (`prompt_piper/demo/`)
 
-Runs a scripted session through clarify → edit → finalize → optimize → export using the implementation-report scenario.
-
-| Module | Role |
-|--------|------|
-| `scenario.py` | Prints step-by-step progress |
-| `runner.py` | Drives `SessionService` with fixed answers |
-| `__main__.py` | `python -m prompt_piper.demo` entry |
-
-## Run
+Runs the local coding-prompt workbench end-to-end against `demo/coding_prompt.yaml`.
 
 ```bash
-# From repo root
 make demo
+# or
+python -m prompt_piper.demo
 ```
 
 Uses isolated paths under `data/demo/` when configured in the demo flow tests.

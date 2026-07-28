@@ -1,8 +1,8 @@
-# Prompt Piper React/Vite frontend (nginx).
+# PromptPiperCode React/Vite frontend (nginx).
 # Build first: see README for web image build command.
 
 [Unit]
-Description=Prompt Piper Web UI
+Description=PromptPiperCode Web UI
 After=network-online.target prompt-piper-api.service
 Wants=network-online.target
 Requires=prompt-piper-api.service

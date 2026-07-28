@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import re
 import shutil
 import subprocess
@@ -30,6 +31,8 @@ _ARTIFACT_PATHS = {
     "canonical_md": "canonical_prompt.md",
     "canonical_txt": "canonical_prompt.txt",
     "requirement_card": "requirement_card.json",
+    "coding_prompt_spec_json": "coding_prompt_spec.json",
+    "coding_prompt_spec_yaml": "coding_prompt_spec.yaml",
     "lineage": "lineage.json",
 }
 
@@ -90,15 +93,17 @@ class GitRegistryService:
         prompt_id = validate_prompt_id(prompt_id)
         now = datetime.now(tz=UTC)
         resolved_abstract = abstract or _derive_abstract(requirement_card, body)
-        resolved_output_form = output_form or requirement_card.desired_output_shape
+        resolved_output_form = (
+            output_form or requirement_card.inputs_outputs_contracts.output_contract
+        )
         metadata = RegistryMetadata(
             prompt_id=prompt_id,
             version=version,
             title=title,
             abstract=resolved_abstract,
             tags=list(tags or []),
-            domain=domain,
-            task_family=task_family,
+            domain=domain or "coding",
+            task_family=task_family or requirement_card.core_task_scope.task_type,
             output_form=resolved_output_form,
             target_provider=target_provider,
             target_model=target_model,
@@ -201,7 +206,7 @@ class GitRegistryService:
             return f"Git init failed: {detail}"
 
         self._run_git("config", "user.email", "prompt-piper@local", cwd=self._registry_path)
-        self._run_git("config", "user.name", "Prompt Piper", cwd=self._registry_path)
+        self._run_git("config", "user.name", "PromptPiperCode", cwd=self._registry_path)
         return None
 
     def _commit_prompt(self, prompt_id: str, version: int) -> tuple[str | None, str | None]:
@@ -328,6 +333,20 @@ class GitRegistryService:
     def _write_requirement_card(self, prompt_dir: Path, card: RequirementCard) -> None:
         (prompt_dir / "requirement_card.json").write_text(
             card.model_dump_json(indent=2),
+            encoding="utf-8",
+        )
+        coding_spec = card.coding_spec_dict()
+        (prompt_dir / "coding_prompt_spec.json").write_text(
+            json.dumps(coding_spec, indent=2),
+            encoding="utf-8",
+        )
+        (prompt_dir / "coding_prompt_spec.yaml").write_text(
+            yaml.dump(
+                coding_spec,
+                default_flow_style=False,
+                sort_keys=False,
+                allow_unicode=True,
+            ),
             encoding="utf-8",
         )
 

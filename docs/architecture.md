@@ -1,6 +1,6 @@
 # Architecture
 
-Prompt Piper is a **local-first prompt engineering workbench**. It helps you clarify requirements, draft prompts, review similarity to prior work, optimize token cost, export artifacts, and store prompts in a Git-backed registry—all on your machine.
+PromptPiperCode is a **local-first coding prompt workbench**. It helps you clarify coding requirements across six dimensions, draft prompts, review similarity to prior work, optimize token cost, export structured specs plus rendered prompts, and store them in a Git-backed registry—all on your machine.
 
 It is **not** an autonomous agent platform. There is no background task runner, no tool-use loop, and no implicit model calls. Every stage is user-initiated and state-gated.
 
@@ -22,7 +22,7 @@ External cloud inference is **opt-in**, **explicitly approved per request**, and
 
 ## Workbench, not agent platform
 
-| Prompt Piper | Autonomous agent platform |
+| PromptPiperCode | Autonomous agent platform |
 |--------------|---------------------------|
 | User drives each workflow step | System plans and executes multi-step tasks |
 | Fixed session state machine | Open-ended tool loop |
@@ -82,31 +82,30 @@ After finalization the canonical draft is **frozen** (`is_frozen=True`). Edits a
 
 `prompt_id` is assigned at finalize: `{slug-from-title}-{first-8-chars-of-session-uuid}` via `build_prompt_id()`.
 
-## RequirementCard
+## RequirementCard (six coding dimensions)
 
-The RequirementCard (`apps/api/prompt_piper_api/domain/requirement_card.py`) is the structured source of truth for what a prompt must do. It is populated incrementally:
+The RequirementCard (`apps/api/prompt_piper_api/domain/requirement_card.py`) is the structured source of truth for a coding prompt. It is populated incrementally:
 
-1. **Initial extraction** — `RequirementCardExtractor` parses the user's opening request.
-2. **Clarification answers** — ranked questions update specific fields until the draft gate is satisfied.
-3. **Edit instructions** — `DraftPatchService` classifies intent (add constraint, change tone, etc.) and mutates the card before regenerating the draft body.
+1. **Initial extraction** — `RequirementCardExtractor` parses the user's opening request into nested dimension models.
+2. **Clarification answers** — ranked questions update dotted leaf paths until the draft gate is satisfied.
+3. **Edit instructions** — `DraftPatchService` classifies intent (add constraint, change output contract, etc.) and mutates the card before regenerating the draft body.
 
-Fields:
+Dimensions:
 
-| Field | Type | Role |
-|-------|------|------|
-| `objective` | string | Primary goal |
-| `audience` | string | Output consumers |
-| `input_materials` | list | Reference documents (empty → `unspecified` in draft) |
-| `constraints` | list | Hard limits |
-| `desired_output_shape` | string | Format/structure |
-| `tone_style` | string | Voice/register |
-| `forbidden_content_actions` | list | Exclusions |
-| `success_criteria` | list | Acceptance conditions |
-| `language` | string | Default `en` |
-| `optimization_targets` | `OptimizationTargets` | Five optional tuning dimensions |
-| `unresolved_fields` | list | Field names still missing or marked `unspecified` |
+| Dimension | Nested model | Key leaves |
+|-----------|--------------|------------|
+| 1. Technical Context | `technical_context` | `environment`, `integration_points`, `dependency_policy`, `forbidden_libraries` |
+| 2. Core Task & Scope | `core_task_scope` | `task_type`, `objective`, `out_of_scope` |
+| 3. Inputs, Outputs & Contracts | `inputs_outputs_contracts` | `inputs`, `output_contract`, `examples` |
+| 4. Architectural Rules | `architectural_rules` | `design_patterns`, `coding_style`, `non_functional` |
+| 5. Edge Cases & Errors | `edge_cases_error_strategy` | `failure_handling`, `bad_inputs`, `edge_cases` |
+| 6. Response Formatting | `response_formatting` | `explanation_level`, `verbosity`, `extra_artifacts` |
+
+Also on the card: `optimization_targets` (five optional tuning dimensions) and `unresolved_fields` (dotted leaf paths still missing or marked `unspecified`).
 
 `unresolved_fields` drives clarification ranking (`ClarificationQuestionRanker`) and the **unspecified field honesty** metric. Drafts must mark missing values as the literal word `unspecified`—never invent details.
+
+Draft bodies use six matching plain-text sections with underline headers.
 
 ## Registry
 
@@ -118,9 +117,10 @@ data/registry/{prompt_id}/
   canonical_prompt.txt
   canonical_prompt.md
   requirement_card.json
+  coding_prompt_spec.json
+  coding_prompt_spec.yaml
   lineage.json
 ```
-
 On finalize, files are written and a Git commit is attempted (`Finalize prompt {prompt_id} version {version}`). If Git is unavailable, files are still written; a warning is returned.
 
 After artifact generation, `update_artifact_paths()` merges export paths and evaluation scores back into `metadata.yaml` and commits again.
@@ -143,7 +143,7 @@ Index storage (`similarity_factory.py`):
 
 Embeddings use `EmbeddingService` with `PROMPT_PIPER_EMBEDDING_MODEL` (default `BAAI/bge-small-en-v1.5`). Set `PROMPT_PIPER_EMBEDDING_FALLBACK=true` for deterministic hash-based vectors in tests/offline mode.
 
-`lessons_learned.md` content is derived from success criteria, constraints, and forbidden actions (`build_lessons_learned()`).
+`lessons_learned.md` content is derived from non-functional rules, out-of-scope items, edge cases, and forbidden libraries (`build_lessons_learned()`).
 
 ## Token optimizer
 
@@ -178,7 +178,7 @@ Two layers protect data leaving the machine:
 |--------|-------------|
 | `requirement_capture_score` | ≥ 0.90 |
 | `unspecified_field_honesty` | = 1.00 |
-| `format_adherence` | = 1.00 (plain-text contract, no markdown headings in body) |
+| `format_adherence` | = 1.00 (six coding-dimension plain-text sections, no markdown headings in body) |
 | `hard_conflict_count` | = 0 |
 
 Metrics are computed by `PreInferenceMetricsService` and stored in `metrics.json` / `metadata.yaml` evaluation_scores after export.
@@ -201,7 +201,7 @@ Blocked and successful attempts append to `data/audit/external_inference.jsonl`.
 apps/api/           FastAPI backend (prompt_piper_api, prompt_piper demo/eval CLIs)
 apps/web/           React + Vite + TanStack Query frontend
 packages/shared/    Shared TypeScript types
-demo/               Demo scenario YAML (implementation report)
+demo/               Demo scenario YAML (coding prompt)
 infra/              Podman Containerfiles, compose, nginx
 tests/              pytest unit and integration tests
 docs/               This documentation

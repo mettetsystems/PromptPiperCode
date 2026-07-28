@@ -1,11 +1,11 @@
 # `@prompt-piper/shared`
 
-Minimal shared TypeScript types published as a local workspace package.
+Minimal shared TypeScript types for **PromptPiperCode**, published as a local workspace package.
 
 | File | Role |
 |------|------|
-| `src/index.ts` | Exported types (e.g. `HealthResponse`, `LlmHealthResponse`) |
+| `src/index.ts` | `APP_NAME` (`PromptPiperCode`), `APP_TAGLINE`, health response types |
 | `package.json` | Package name and build config |
 | `tsconfig.json` | TypeScript project settings |
 
-Imported by `apps/web` for health checks and API typing alignment. Session-specific DTOs live in `apps/web/src/api/types.ts`; extend this package when types are shared across multiple frontends.
+Imported by `apps/web` for branding, health checks, and API typing alignment. Session-specific DTOs (including the nested coding `RequirementCard`) live in `apps/web/src/api/types.ts`; extend this package when types are shared across multiple frontends.

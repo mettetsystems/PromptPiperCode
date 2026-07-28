@@ -23,7 +23,7 @@ export function AppLayout() {
       <header className="layout-header">
         <div className="layout-header-start">
           <div className="layout-brand">
-            <p className="eyebrow">Local engineering workbench</p>
+            <p className="eyebrow">Local coding prompt workbench</p>
             <Link to="/" className="brand-link">
               <img src={logoUrl} alt="" className="brand-logo" width={360} height={72} />
               <span className="sr-only">{APP_NAME}</span>

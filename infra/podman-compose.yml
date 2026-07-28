@@ -1,4 +1,4 @@
-# Local-first Podman Compose stack for Prompt Piper (Fedora-friendly).
+# Local-first Podman Compose stack for PromptPiperCode (Fedora-friendly).
 # Run from repo root: ./scripts/dev-up.sh
 # Or: podman compose -f infra/podman-compose.yml up -d --build
 

@@ -155,7 +155,7 @@ export function RegistryDetailPage() {
             )}
           </Panel>
         </div>
-        <RequirementCardPanel card={data.requirement_card} title="Requirement card" />
+        <RequirementCardPanel card={data.requirement_card} title="Coding dimensions" />
       </div>
     </div>
   );

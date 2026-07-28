@@ -27,34 +27,37 @@ def regression_cases_path() -> Path:
     return Path(__file__).resolve().parent / "evals" / "regression_cases.yaml"
 
 
-def _plain_text_body(*, with_unspecified_tone: bool = False) -> str:
-    style_line = "unspecified" if with_unspecified_tone else "Direct and analytical."
+def _plain_text_body(*, with_unspecified_explanation: bool = False) -> str:
+    explanation_line = (
+        "Explanation level: unspecified"
+        if with_unspecified_explanation
+        else "Explanation level: brief rationale then code."
+    )
     return "\n".join(
         [
-            "Mission",
-            "-------",
-            "Summarize weekly engineering status for leadership review.",
+            "Technical Context",
+            "-----------------",
+            "Environment: Python with FastAPI and Pydantic",
             "",
-            "Context",
-            "-------",
-            "Audience: Engineering managers",
-            "Primary language: en",
+            "Core Task and Scope",
+            "-------------------",
+            "Objective: Add FastAPI endpoint for weekly engineering status summaries.",
             "",
-            "Constraints",
-            "---------------",
+            "Inputs, Outputs, and Contracts",
+            "------------------------------",
+            "Output contract: JSON with blockers, owners, and next steps.",
+            "",
+            "Architectural Rules and Constraints",
+            "-----------------------------------",
             "Keep the response within 300 words.",
             "",
-            "Style",
-            "-----",
-            style_line,
+            "Edge Cases and Error Strategy",
+            "-----------------------------",
+            "Failure handling: raise HTTPException on validation errors.",
             "",
-            "Output contract",
-            "----------------",
-            "Bulleted summary with risks and next steps.",
-            "",
-            "Acceptance criteria",
+            "Response Formatting",
             "-------------------",
-            "Meet this criterion: Covers blockers and owners.",
+            explanation_line,
         ]
     )
 
@@ -63,12 +66,14 @@ def test_unspecified_field_honesty_is_one_when_marked_unspecified(
     metrics_service: PreInferenceMetricsService,
 ) -> None:
     card = RequirementCard(
-        objective="Summarize weekly engineering status for leadership review.",
-        audience="Engineering managers",
-        tone_style="",
-        unresolved_fields=["tone_style"],
+        core_task_scope={
+            "objective": "Add FastAPI endpoint for weekly engineering status summaries."
+        },
+        technical_context={"environment": "Python with FastAPI and Pydantic"},
+        response_formatting={"explanation_level": ""},
+        unresolved_fields=["response_formatting.explanation_level"],
     )
-    metrics = metrics_service.compute(_plain_text_body(with_unspecified_tone=True), card)
+    metrics = metrics_service.compute(_plain_text_body(with_unspecified_explanation=True), card)
     assert metrics.unspecified_field_honesty == 1.0
 
 
@@ -76,12 +81,14 @@ def test_unspecified_field_honesty_fails_when_unresolved_not_marked(
     metrics_service: PreInferenceMetricsService,
 ) -> None:
     card = RequirementCard(
-        objective="Summarize weekly engineering status for leadership review.",
-        audience="Engineering managers",
-        tone_style="",
-        unresolved_fields=["tone_style"],
+        core_task_scope={
+            "objective": "Add FastAPI endpoint for weekly engineering status summaries."
+        },
+        technical_context={"environment": "Python with FastAPI and Pydantic"},
+        response_formatting={"explanation_level": ""},
+        unresolved_fields=["response_formatting.explanation_level"],
     )
-    metrics = metrics_service.compute(_plain_text_body(with_unspecified_tone=False), card)
+    metrics = metrics_service.compute(_plain_text_body(with_unspecified_explanation=False), card)
     assert metrics.unspecified_field_honesty == 0.0
 
 
@@ -90,13 +97,13 @@ def test_format_adherence_is_one_for_plain_text_contract() -> None:
 
 
 def test_format_adherence_fails_for_markdown_headings() -> None:
-    body = "# Mission\n\nSummarize weekly status."
+    body = "# Core Task and Scope\n\nAdd FastAPI endpoint."
     assert format_adherence_score(body) == 0.0
 
 
 def test_token_cost_estimate_uses_local_approximation() -> None:
-    short = estimate_token_cost("Summarize weekly status.")
-    long = estimate_token_cost("Summarize weekly status. " * 20)
+    short = estimate_token_cost("Add FastAPI endpoint.")
+    long = estimate_token_cost("Add FastAPI endpoint. " * 20)
     assert short > 0
     assert long > short
 
@@ -105,9 +112,13 @@ def test_hard_conflict_count_zero_for_clean_prompt(
     metrics_service: PreInferenceMetricsService,
 ) -> None:
     card = RequirementCard(
-        objective="Summarize weekly engineering status for leadership review.",
-        audience="Engineering managers",
-        desired_output_shape="Bulleted summary with risks and next steps",
+        core_task_scope={
+            "objective": "Add FastAPI endpoint for weekly engineering status summaries."
+        },
+        technical_context={"environment": "Python with FastAPI and Pydantic"},
+        inputs_outputs_contracts={
+            "output_contract": "JSON with blockers, owners, and next steps"
+        },
     )
     optimization = TokenOptimizationEngine().optimize(_plain_text_body(), card)
     metrics = metrics_service.compute(

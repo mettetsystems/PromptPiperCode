@@ -49,18 +49,22 @@ def service(registry_path: Path, artifact_export: ArtifactExportService) -> Sess
 def _sample_body() -> str:
     return "\n".join(
         [
-            "Mission",
-            "-------",
-            "Summarize weekly engineering status for leadership review.",
+            "Technical Context",
+            "-----------------",
+            "Environment: Python with FastAPI and Pydantic",
             "",
-            "Constraints",
-            "---------------",
+            "Core Task and Scope",
+            "-------------------",
+            "Objective: Add FastAPI endpoint for weekly engineering status summaries.",
+            "",
+            "Architectural Rules and Constraints",
+            "-----------------------------------",
             "Keep the response within 300 words.",
             "Use only provided source notes.",
             "",
-            "Output contract",
-            "----------------",
-            "Bulleted summary with risks and next steps.",
+            "Inputs, Outputs, and Contracts",
+            "------------------------------",
+            "Output contract: JSON with blockers, owners, and next steps.",
         ]
     )
 
@@ -264,7 +268,9 @@ def test_api_route_generates_artifacts(
 
     detail = client.get(f"/sessions/{session_id}").json()
     card = detail["requirement_card"]
-    card["objective"] = "Summarize weekly engineering status for leadership review."
+    card["core_task_scope"]["objective"] = (
+        "Summarize weekly engineering status for leadership review."
+    )
     card["unresolved_fields"] = []
 
     record = service.get_session(UUID(session_id))

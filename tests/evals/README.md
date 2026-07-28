@@ -4,7 +4,7 @@ YAML fixtures for pre-inference quality gate regression testing.
 
 | File | Role |
 |------|------|
-| `regression_cases.yaml` | Baseline prompts, requirement cards, `must_preserve` phrases |
+| `regression_cases.yaml` | Nested coding RequirementCards, six-section baseline bodies, `must_preserve` phrases |
 
 Consumed by:
 

@@ -1,43 +1,46 @@
 version: 1
 regression_cases:
-  - id: weekly-status
-    description: Engineering weekly status summary
+  - id: fastapi-status-endpoint
+    description: FastAPI weekly status summary endpoint
     requirement_card:
-      objective: Summarize weekly engineering status for leadership review.
-      audience: Engineering managers
-      desired_output_shape: Bulleted summary with risks and next steps
-      language: en
-      constraints:
-        - Keep the response within 300 words.
-      success_criteria:
-        - Covers blockers and owners.
+      technical_context:
+        environment: Python with FastAPI and Pydantic
+      core_task_scope:
+        task_type: new feature logic
+        objective: Add FastAPI endpoint for weekly engineering status summaries.
+      inputs_outputs_contracts:
+        output_contract: JSON with blockers, owners, and next steps
+      architectural_rules:
+        non_functional:
+          - Keep the response within 300 words.
+          - Covers blockers and owners.
       unresolved_fields: []
     baseline_body: |
-      Mission
-      -------
-      Summarize weekly engineering status for leadership review.
+      Technical Context
+      -----------------
+      Environment: Python with FastAPI and Pydantic
 
-      Context
-      -------
-      Audience: Engineering managers
-      Primary language: en
-
-      Constraints
-      ---------------
-      Keep the response within 300 words.
-      Use only provided source notes.
-
-      Style
-      -----
-      Direct and analytical.
-
-      Output contract
-      ----------------
-      Bulleted summary with risks and next steps.
-
-      Acceptance criteria
+      Core Task and Scope
       -------------------
-      Meet this criterion: Covers blockers and owners.
+      Task type: new feature logic
+      Objective: Add FastAPI endpoint for weekly engineering status summaries.
+
+      Inputs, Outputs, and Contracts
+      ------------------------------
+      Output contract: JSON with blockers, owners, and next steps.
+
+      Architectural Rules and Constraints
+      -----------------------------------
+      Keep the response within 300 words.
+      Covers blockers and owners.
+
+      Edge Cases and Error Strategy
+      -----------------------------
+      Failure handling: raise HTTPException on validation errors.
+
+      Response Formatting
+      -------------------
+      Explanation level: brief rationale then code.
     must_preserve:
       - weekly engineering status
       - blockers
@@ -46,165 +49,174 @@ regression_cases:
       - invent metrics
       - guaranteed outcome
 
-  - id: onboarding-checklist
-    description: Onboarding checklist with unspecified tone
+  - id: onboarding-checklist-api
+    description: Onboarding checklist generator with unspecified explanation
     requirement_card:
-      objective: Draft onboarding checklist for new hires.
-      audience: People operations
-      tone_style: ""
+      technical_context:
+        environment: Python CLI tooling
+      core_task_scope:
+        objective: Draft onboarding checklist generator for new hires.
+      response_formatting:
+        explanation_level: ""
       unresolved_fields:
-        - tone_style
-      success_criteria:
-        - Cover first-week tasks.
+        - response_formatting.explanation_level
+      architectural_rules:
+        non_functional:
+          - Cover first-week tasks.
     baseline_body: |
-      Mission
-      -------
-      Draft onboarding checklist for new hires.
+      Technical Context
+      -----------------
+      Environment: Python CLI tooling
 
-      Context
-      -------
-      Audience: People operations
-      Primary language: en
-
-      Constraints
-      ---------------
-      Keep it concise.
-
-      Style
-      -----
-      unspecified
-
-      Output contract
-      ----------------
-      Checklist with owners and due dates.
-
-      Acceptance criteria
+      Core Task and Scope
       -------------------
-      Meet this criterion: Cover first-week tasks.
+      Objective: Draft onboarding checklist generator for new hires.
+
+      Inputs, Outputs, and Contracts
+      ------------------------------
+      Output contract: Checklist with owners and due dates.
+
+      Architectural Rules and Constraints
+      -----------------------------------
+      Keep it concise.
+      Cover first-week tasks.
+
+      Edge Cases and Error Strategy
+      -----------------------------
+      Failure handling: return empty checklist on missing inputs.
+
+      Response Formatting
+      -------------------
+      Explanation level: unspecified
     must_preserve:
       - onboarding checklist
       - first-week
     critical_safety: false
     safety_forbidden_patterns: []
 
-  - id: customer-interview-summary
-    description: Product discovery interview notes
+  - id: interview-notes-parser
+    description: Interview notes parser for product discovery
     requirement_card:
-      objective: Summarize customer interview notes for product discovery.
-      audience: Product managers
-      desired_output_shape: Structured themes with supporting quotes
-      language: en
-      constraints:
-        - Do not invent customer quotes.
-      success_criteria:
-        - Separate pains from feature requests.
+      technical_context:
+        environment: Python with Pydantic
+      core_task_scope:
+        objective: Parse customer interview notes into structured product themes.
+      inputs_outputs_contracts:
+        output_contract: Structured themes with supporting quotes
+      architectural_rules:
+        non_functional:
+          - Do not invent customer quotes.
+          - Separate pains from feature requests.
       unresolved_fields: []
     baseline_body: |
-      Mission
-      -------
-      Summarize customer interview notes for product discovery.
+      Technical Context
+      -----------------
+      Environment: Python with Pydantic
 
-      Context
-      -------
-      Audience: Product managers
-      Primary language: en
-
-      Constraints
-      ---------------
-      Do not invent customer quotes.
-      Use only supplied interview transcripts.
-
-      Style
-      -----
-      Neutral and evidence-based.
-
-      Output contract
-      ----------------
-      Structured themes with supporting quotes.
-
-      Acceptance criteria
+      Core Task and Scope
       -------------------
-      Meet this criterion: Separate pains from feature requests.
+      Objective: Parse customer interview notes into structured product themes.
+
+      Inputs, Outputs, and Contracts
+      ------------------------------
+      Output contract: Structured themes with supporting quotes.
+
+      Architectural Rules and Constraints
+      -----------------------------------
+      Avoid invent customer quotes.
+      Separate pains from feature requests.
+
+      Edge Cases and Error Strategy
+      -----------------------------
+      Failure handling: skip empty transcripts.
+
+      Response Formatting
+      -------------------
+      Explanation level: code only.
     must_preserve:
       - customer interview
-      - product discovery
+      - product
     critical_safety: true
     safety_forbidden_patterns:
       - invent metrics
       - fabricated quote
 
-  - id: release-notes
-    description: Release notes for engineering team
+  - id: release-notes-generator
+    description: Release notes generator for engineering team
     requirement_card:
-      objective: Write release notes for the latest platform deployment.
-      audience: Engineering team
-      desired_output_shape: Short changelog with upgrade notes
-      language: en
+      technical_context:
+        environment: Python scripting
+      core_task_scope:
+        objective: Write release notes generator for the latest platform deployment.
+      inputs_outputs_contracts:
+        output_contract: Short changelog with upgrade notes
       unresolved_fields: []
     baseline_body: |
-      Mission
-      -------
-      Write release notes for the latest platform deployment.
+      Technical Context
+      -----------------
+      Environment: Python scripting
 
-      Context
-      -------
-      Audience: Engineering team
-      Primary language: en
-
-      Constraints
-      ---------------
-      Mention breaking changes explicitly.
-
-      Style
-      -----
-      Technical and concise.
-
-      Output contract
-      ----------------
-      Short changelog with upgrade notes.
-
-      Acceptance criteria
+      Core Task and Scope
       -------------------
-      Meet this criterion: List migration steps when needed.
+      Objective: Write release notes generator for the latest platform deployment.
+
+      Inputs, Outputs, and Contracts
+      ------------------------------
+      Output contract: Short changelog with upgrade notes.
+
+      Architectural Rules and Constraints
+      -----------------------------------
+      Mention breaking changes explicitly.
+      List migration steps when needed.
+
+      Edge Cases and Error Strategy
+      -----------------------------
+      Failure handling: omit empty sections.
+
+      Response Formatting
+      -------------------
+      Explanation level: brief rationale then code.
     must_preserve:
       - release notes
       - platform deployment
     critical_safety: false
     safety_forbidden_patterns: []
 
-  - id: support-macro
-    description: Support macro for password reset
+  - id: password-reset-handler
+    description: Password reset support macro handler
     requirement_card:
-      objective: Create a support macro for password reset requests.
-      audience: Support agents
-      desired_output_shape: Step-by-step reply template
-      language: en
+      technical_context:
+        environment: Python with FastAPI
+      core_task_scope:
+        objective: Create a support macro handler for password reset requests.
+      inputs_outputs_contracts:
+        output_contract: Step-by-step reply template
       unresolved_fields: []
     baseline_body: |
-      Mission
-      -------
-      Create a support macro for password reset requests.
+      Technical Context
+      -----------------
+      Environment: Python with FastAPI
 
-      Context
-      -------
-      Audience: Support agents
-      Primary language: en
-
-      Constraints
-      ---------------
-      Do not request unnecessary personal data.
-
-      Style
-      -----
-      Friendly and clear.
-
-      Output contract
-      ----------------
-      Step-by-step reply template.
-
-      Acceptance criteria
+      Core Task and Scope
       -------------------
-      Meet this criterion: Include escalation path for account lockouts.
+      Objective: Create a support macro handler for password reset requests.
+
+      Inputs, Outputs, and Contracts
+      ------------------------------
+      Output contract: Step-by-step reply template.
+
+      Architectural Rules and Constraints
+      -----------------------------------
+      Avoid request unnecessary personal data.
+      Include escalation path for account lockouts.
+
+      Edge Cases and Error Strategy
+      -----------------------------
+      Failure handling: escalate on lockout.
+
+      Response Formatting
+      -------------------
+      Explanation level: brief rationale then code.
     must_preserve:
       - password reset
       - support macro
@@ -213,117 +225,125 @@ regression_cases:
       - share passwords
       - guaranteed outcome
 
-  - id: legal-contract-review
-    description: Vendor contract liability review
+  - id: contract-clause-scanner
+    description: Vendor contract liability scanner
     requirement_card:
-      objective: Review vendor contracts for liability clauses and indemnification.
-      audience: Legal counsel
-      desired_output_shape: Issue list with clause references
-      language: en
+      technical_context:
+        environment: Python NLP utilities
+      core_task_scope:
+        objective: Review vendor contracts for liability clauses and indemnification.
+      inputs_outputs_contracts:
+        output_contract: Issue list with clause references
       unresolved_fields: []
     baseline_body: |
-      Mission
-      -------
-      Review vendor contracts for liability clauses and indemnification.
+      Technical Context
+      -----------------
+      Environment: Python NLP utilities
 
-      Context
-      -------
-      Audience: Legal counsel
-      Primary language: en
-
-      Constraints
-      ---------------
-      Flag ambiguous indemnification language.
-
-      Style
-      -----
-      Formal and precise.
-
-      Output contract
-      ----------------
-      Issue list with clause references.
-
-      Acceptance criteria
+      Core Task and Scope
       -------------------
-      Meet this criterion: Separate high-risk from informational findings.
+      Objective: Review vendor contracts for liability clauses and indemnification.
+
+      Inputs, Outputs, and Contracts
+      ------------------------------
+      Output contract: Issue list with clause references.
+
+      Architectural Rules and Constraints
+      -----------------------------------
+      Flag ambiguous indemnification language.
+      Separate high-risk from informational findings.
+
+      Edge Cases and Error Strategy
+      -----------------------------
+      Failure handling: mark unscannable sections.
+
+      Response Formatting
+      -------------------
+      Explanation level: brief rationale then code.
     must_preserve:
       - liability
       - indemnification
     critical_safety: false
     safety_forbidden_patterns: []
 
-  - id: code-review-prompt
+  - id: code-review-checklist
     description: Code review checklist prompt
     requirement_card:
-      objective: Review pull requests for correctness, tests, and security risks.
-      audience: Senior engineers
-      desired_output_shape: Findings grouped by severity
-      language: en
+      technical_context:
+        environment: TypeScript / React
+      core_task_scope:
+        task_type: generating tests
+        objective: Review pull requests for correctness, tests, and security risks.
+      inputs_outputs_contracts:
+        output_contract: Findings grouped by severity
       unresolved_fields: []
     baseline_body: |
-      Mission
-      -------
-      Review pull requests for correctness, tests, and security risks.
+      Technical Context
+      -----------------
+      Environment: TypeScript / React
 
-      Context
-      -------
-      Audience: Senior engineers
-      Primary language: en
-
-      Constraints
-      ---------------
-      Focus on changed files only.
-
-      Style
-      -----
-      Direct and actionable.
-
-      Output contract
-      ----------------
-      Findings grouped by severity.
-
-      Acceptance criteria
+      Core Task and Scope
       -------------------
-      Meet this criterion: Recommend concrete fixes when possible.
+      Task type: generating tests
+      Objective: Review pull requests for correctness, tests, and security risks.
+
+      Inputs, Outputs, and Contracts
+      ------------------------------
+      Output contract: Findings grouped by severity.
+
+      Architectural Rules and Constraints
+      -----------------------------------
+      Focus on changed files only.
+      Recommend concrete fixes when possible.
+
+      Edge Cases and Error Strategy
+      -----------------------------
+      Failure handling: skip binary files.
+
+      Response Formatting
+      -------------------
+      Explanation level: brief rationale then code.
     must_preserve:
       - pull requests
       - security risks
     critical_safety: false
     safety_forbidden_patterns: []
 
-  - id: research-brief
-    description: Competitive research brief
+  - id: competitive-research-cli
+    description: Competitive research brief CLI
     requirement_card:
-      objective: Summarize competitive research for executive briefing.
-      audience: Executives
-      desired_output_shape: One-page brief with strategic implications
-      language: en
+      technical_context:
+        environment: Python CLI
+      core_task_scope:
+        objective: Summarize competitive research for executive briefing.
+      inputs_outputs_contracts:
+        output_contract: One-page brief with strategic implications
       unresolved_fields: []
     baseline_body: |
-      Mission
-      -------
-      Summarize competitive research for executive briefing.
+      Technical Context
+      -----------------
+      Environment: Python CLI
 
-      Context
-      -------
-      Audience: Executives
-      Primary language: en
-
-      Constraints
-      ---------------
-      Distinguish verified facts from assumptions.
-
-      Style
-      -----
-      Executive and concise.
-
-      Output contract
-      ----------------
-      One-page brief with strategic implications.
-
-      Acceptance criteria
+      Core Task and Scope
       -------------------
-      Meet this criterion: Include recommended next actions.
+      Objective: Summarize competitive research for executive briefing.
+
+      Inputs, Outputs, and Contracts
+      ------------------------------
+      Output contract: One-page brief with strategic implications.
+
+      Architectural Rules and Constraints
+      -----------------------------------
+      Distinguish verified facts from assumptions.
+      Include recommended next actions.
+
+      Edge Cases and Error Strategy
+      -----------------------------
+      Failure handling: flag missing sources.
+
+      Response Formatting
+      -------------------
+      Explanation level: brief rationale then code.
     must_preserve:
       - competitive research
       - executive briefing
@@ -331,78 +351,82 @@ regression_cases:
     safety_forbidden_patterns:
       - invent metrics
 
-  - id: recipe-generator
-    description: Vegetarian recipe generator
+  - id: recipe-api
+    description: Vegetarian recipe API generator
     requirement_card:
-      objective: Create vegetarian dinner recipes with pantry ingredients and timing.
-      audience: Home cooks
-      desired_output_shape: Recipe card with ingredients and steps
-      language: en
+      technical_context:
+        environment: Python with FastAPI
+      core_task_scope:
+        objective: Create vegetarian dinner recipes with pantry ingredients and timing.
+      inputs_outputs_contracts:
+        output_contract: Recipe card with ingredients and steps
       unresolved_fields: []
     baseline_body: |
-      Mission
-      -------
-      Create vegetarian dinner recipes with pantry ingredients and timing.
+      Technical Context
+      -----------------
+      Environment: Python with FastAPI
 
-      Context
-      -------
-      Audience: Home cooks
-      Primary language: en
-
-      Constraints
-      ---------------
-      Respect listed dietary exclusions.
-
-      Style
-      -----
-      Warm and practical.
-
-      Output contract
-      ----------------
-      Recipe card with ingredients and steps.
-
-      Acceptance criteria
+      Core Task and Scope
       -------------------
-      Meet this criterion: Include prep and cook times.
+      Objective: Create vegetarian dinner recipes with pantry ingredients and timing.
+
+      Inputs, Outputs, and Contracts
+      ------------------------------
+      Output contract: Recipe card with ingredients and steps.
+
+      Architectural Rules and Constraints
+      -----------------------------------
+      Respect listed dietary exclusions.
+      Include prep and cook times.
+
+      Edge Cases and Error Strategy
+      -----------------------------
+      Failure handling: return empty recipe on missing pantry data.
+
+      Response Formatting
+      -------------------
+      Explanation level: brief rationale then code.
     must_preserve:
       - vegetarian
       - pantry ingredients
     critical_safety: false
     safety_forbidden_patterns: []
 
-  - id: incident-postmortem
-    description: Incident postmortem summary
+  - id: incident-postmortem-tool
+    description: Incident postmortem summary tool
     requirement_card:
-      objective: Draft an incident postmortem with timeline, impact, and follow-ups.
-      audience: Incident response team
-      desired_output_shape: Postmortem report sections
-      language: en
+      technical_context:
+        environment: Python scripting
+      core_task_scope:
+        objective: Draft an incident postmortem with timeline, impact, and follow-ups.
+      inputs_outputs_contracts:
+        output_contract: Postmortem report sections
       unresolved_fields: []
     baseline_body: |
-      Mission
-      -------
-      Draft an incident postmortem with timeline, impact, and follow-ups.
+      Technical Context
+      -----------------
+      Environment: Python scripting
 
-      Context
-      -------
-      Audience: Incident response team
-      Primary language: en
-
-      Constraints
-      ---------------
-      Separate facts from hypotheses.
-
-      Style
-      -----
-      Blameless and factual.
-
-      Output contract
-      ----------------
-      Postmortem report sections.
-
-      Acceptance criteria
+      Core Task and Scope
       -------------------
-      Meet this criterion: List corrective actions with owners.
+      Objective: Draft an incident postmortem with timeline, impact, and follow-ups.
+
+      Inputs, Outputs, and Contracts
+      ------------------------------
+      Output contract: Postmortem report sections.
+
+      Architectural Rules and Constraints
+      -----------------------------------
+      Separate facts from hypotheses.
+      List corrective actions with owners.
+
+      Edge Cases and Error Strategy
+      -----------------------------
+      Failure handling: mark unknown timeline gaps.
+
+      Response Formatting
+      -------------------
+      Explanation level: brief rationale then code.
     must_preserve:
       - incident postmortem
       - follow-ups

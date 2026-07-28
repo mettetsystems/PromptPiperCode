@@ -1,8 +1,8 @@
-# PostgreSQL with pgvector for Prompt Piper.
+# PostgreSQL with pgvector for PromptPiperCode.
 # Requires: podman build (see README) and scripts/init-db-quadlet.sh after first start.
 
 [Unit]
-Description=Prompt Piper PostgreSQL (pgvector)
+Description=PromptPiperCode PostgreSQL (pgvector)
 After=network-online.target prompt-piper-network.service
 Wants=network-online.target prompt-piper-network.service
 Before=prompt-piper-api.service

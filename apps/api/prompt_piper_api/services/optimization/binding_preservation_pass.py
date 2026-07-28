@@ -36,7 +36,8 @@ class BindingPreservationPass:
             return body, []
 
         preserved: list[str] = []
-        constraints = extract_section(body, "Constraints")
+        section_title = "Architectural Rules and Constraints"
+        constraints = extract_section(body, section_title)
         existing = {normalize_phrase_for_capture(line) for line in constraints}
         for phrase in missing:
             key = normalize_phrase_for_capture(phrase)
@@ -49,11 +50,13 @@ class BindingPreservationPass:
         if not preserved:
             return body, []
 
-        if re.search(r"^Constraints\n-+\n", body, re.MULTILINE | re.IGNORECASE):
-            body = self._replace_section(body, "Constraints", constraints)
+        if re.search(rf"^{re.escape(section_title)}\n-+\n", body, re.MULTILINE | re.IGNORECASE):
+            body = self._replace_section(body, section_title, constraints)
         else:
-            divider = "-" * len("Constraints")
-            body = f"{body.rstrip()}\n\nConstraints\n{divider}\n" + "\n".join(constraints)
+            divider = "-" * len(section_title)
+            body = (
+                f"{body.rstrip()}\n\n{section_title}\n{divider}\n" + "\n".join(constraints)
+            )
 
         return body, preserved
 

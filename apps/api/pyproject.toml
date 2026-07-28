@@ -1,7 +1,7 @@
 [project]
 name = "prompt-piper-api"
 version = "0.1.0"
-description = "Prompt Piper FastAPI backend"
+description = "PromptPiperCode FastAPI backend"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115.0",

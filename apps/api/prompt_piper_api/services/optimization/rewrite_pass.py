@@ -7,7 +7,7 @@ from prompt_piper_api.services.requirement_capture import dedupe_phrases
 
 
 class RewriteCompressionPass:
-    """Pass 2: rebuild into canonical structure and front-load salient instructions."""
+    """Pass 2: rebuild into canonical coding-dimension structure and front-load instructions."""
 
     def run(
         self,
@@ -17,35 +17,39 @@ class RewriteCompressionPass:
     ) -> tuple[str, list[str]]:
         compressed_notes: list[str] = []
 
-        mission = dedupe_phrases(
-            self._slot_values(graph, ConstraintSlot.OBJECTIVE) or extract_section(body, "Mission")
-        )[:2]
-        context = self._build_context(body, card, graph)
-        constraints = dedupe_phrases(
+        core_task = dedupe_phrases(
+            self._slot_values(graph, ConstraintSlot.OBJECTIVE)
+            or extract_section(body, "Core Task and Scope")
+        )[:4]
+        technical = self._build_technical_context(body, card, graph)
+        io_contract = dedupe_phrases(
+            self._slot_values(graph, ConstraintSlot.FORMAT)
+            or extract_section(body, "Inputs, Outputs, and Contracts")
+        )[:4]
+        architectural = dedupe_phrases(
             self._slot_values(graph, ConstraintSlot.SCOPE)
             + self._slot_values(graph, ConstraintSlot.MUST_CITE)
-        ) or extract_section(body, "Constraints")
+        ) or extract_section(body, "Architectural Rules and Constraints")
         tools = self._build_tools(graph)
-        style = extract_section(body, "Style") or (
-            [card.tone_style.strip()] if card.tone_style.strip() else []
+        edge_errors = extract_section(body, "Edge Cases and Error Strategy")
+        response_fmt = extract_section(body, "Response Formatting") or self._build_response_fmt(
+            card
         )
-        output_contract = dedupe_phrases(
-            self._slot_values(graph, ConstraintSlot.FORMAT) or extract_section(body, "Output contract")
-        )[:2]
-        acceptance = extract_section(body, "Acceptance criteria")
         artifact_rules = self._slot_values(graph, ConstraintSlot.ARTIFACT_REQUIRED)
 
-        if card.constraints and len(constraints) > len(card.constraints):
+        if card.architectural_rules.non_functional and len(architectural) > len(
+            card.architectural_rules.non_functional
+        ):
             compressed_notes.append("Merged duplicate constraint statements.")
 
         sections: list[tuple[str, list[str]]] = [
-            ("Mission", mission[:2]),
-            ("Context", context[:3]),
-            ("Constraints", constraints[:8]),
+            ("Technical Context", technical[:5]),
+            ("Core Task and Scope", core_task[:4]),
+            ("Inputs, Outputs, and Contracts", io_contract[:4]),
+            ("Architectural Rules and Constraints", architectural[:8]),
             ("Tools", tools),
-            ("Style", style[:2]),
-            ("Output contract", output_contract[:2]),
-            ("Acceptance tests", acceptance[:5]),
+            ("Edge Cases and Error Strategy", edge_errors[:5]),
+            ("Response Formatting", response_fmt[:4]),
             ("Artifact rules", artifact_rules),
         ]
 
@@ -59,25 +63,43 @@ class RewriteCompressionPass:
         return list(graph.slots.get(slot.value, []))
 
     @staticmethod
-    def _build_context(body: str, card: RequirementCard, graph: ConstraintGraph) -> list[str]:
+    def _build_technical_context(
+        body: str,
+        card: RequirementCard,
+        graph: ConstraintGraph,
+    ) -> list[str]:
         lines: list[str] = []
-        audience = graph.slots.get(ConstraintSlot.AUDIENCE.value, [])
-        if audience:
-            lines.append(f"Audience: {audience[0]}")
-        elif card.audience.strip():
-            lines.append(f"Audience: {card.audience.strip()}")
-        if card.context_background.strip():
-            lines.append(f"Background: {card.context_background.strip()}")
-        if card.language.strip():
-            lines.append(f"Language: {card.language.strip()}")
-        context_lines = extract_section(body, "Context")
-        for line in context_lines:
-            if line.lower().startswith("audience:"):
-                continue
-            if line.lower().startswith("language:"):
+        environment = graph.slots.get(ConstraintSlot.AUDIENCE.value, [])
+        if environment:
+            lines.append(f"Environment: {environment[0]}")
+        elif card.technical_context.environment.strip():
+            lines.append(f"Environment: {card.technical_context.environment.strip()}")
+        if card.technical_context.dependency_policy.strip():
+            lines.append(f"Dependency policy: {card.technical_context.dependency_policy.strip()}")
+        if card.technical_context.integration_points:
+            lines.append(
+                "Integration points: " + "; ".join(card.technical_context.integration_points)
+            )
+        for line in extract_section(body, "Technical Context"):
+            if line.lower().startswith("environment:"):
                 continue
             if line not in lines:
                 lines.append(line)
+        return lines
+
+    @staticmethod
+    def _build_response_fmt(card: RequirementCard) -> list[str]:
+        lines: list[str] = []
+        if card.response_formatting.explanation_level.strip():
+            lines.append(
+                f"Explanation level: {card.response_formatting.explanation_level.strip()}"
+            )
+        if card.response_formatting.verbosity.strip():
+            lines.append(f"Verbosity: {card.response_formatting.verbosity.strip()}")
+        if card.response_formatting.extra_artifacts:
+            lines.append(
+                "Extra artifacts: " + "; ".join(card.response_formatting.extra_artifacts)
+            )
         return lines
 
     @staticmethod

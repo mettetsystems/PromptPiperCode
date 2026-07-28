@@ -1,5 +1,5 @@
 /**
- * Shared types for Prompt Piper.
+ * Shared types for PromptPiperCode.
  * OpenAPI-generated types can be added here as the API surface grows.
  */
 
@@ -20,7 +20,7 @@ export interface LlmHealthResponse {
   checked_at: string;
 }
 
-export const APP_NAME = "Prompt Piper";
+export const APP_NAME = "PromptPiperCode";
 
 export const APP_TAGLINE =
-  "Design, refine, and store prompts locally. Send to a model only when you choose.";
+  "Design coding prompts locally across six dimensions. Export a structured spec and a ready-to-paste prompt.";

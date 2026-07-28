@@ -198,7 +198,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--stop",
         action="store_true",
-        help="Stop a Prompt Piper-managed llama-server process.",
+        help="Stop a PromptPiperCode-managed llama-server process.",
     )
     args = parser.parse_args(argv)
 

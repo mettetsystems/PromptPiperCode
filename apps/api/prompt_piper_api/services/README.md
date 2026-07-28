@@ -15,11 +15,11 @@ Business logic layer. Routes should delegate here rather than mutating domain ob
 
 | Module | Role |
 |--------|------|
-| `requirement_card_extractor.py` | Parse initial request into requirement card |
-| `clarification_question_ranker.py` | CPU-fast next-question selection |
+| `requirement_card_extractor.py` | Parse initial request into nested coding RequirementCard |
+| `clarification_question_ranker.py` | CPU-fast next-question selection (dotted coding leaves) |
 | `clarification_suggestion_service.py` | Optional LLM quick-reply suggestions |
-| `draft_generator.py` | Initial draft after clarification |
-| `draft_patch_service.py` | Apply natural-language edits to draft |
+| `draft_generator.py` | Six-section coding draft after clarification |
+| `draft_patch_service.py` | Apply natural-language edits to coding card + draft |
 
 ## Quality, similarity, export
 
@@ -36,8 +36,8 @@ Business logic layer. Routes should delegate here rather than mutating domain ob
 | `quality_gate_service.py` | Approval gate thresholds |
 | `optimization/` | [Five-pass token optimizer](optimization/README.md) |
 | `git_registry_service.py` | Git-backed canonical prompt registry |
-| `artifact_export_service.py` | Timestamped export folders and manifests |
-| `artifact_service.py` | HTML/PDF/MD generation (Pandoc/WeasyPrint) |
+| `artifact_export_service.py` | Timestamped export folders, coding specs, manifests |
+| `artifact_service.py` | HTML/PDF/MD + coding_prompt_spec generation (Pandoc/WeasyPrint) |
 | `external_inference_service.py` | Gated send-to-model (local LLM or external provider) with audit |
 | `audit_log_service.py` | JSONL audit trail |
 

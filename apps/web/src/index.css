@@ -3,14 +3,14 @@
   font-family: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color: #1c1917;
-  background-color: #ece8e1;
-  --surface: #faf8f5;
-  --surface-muted: #f3efe8;
-  --border: #d6d0c4;
-  --text-muted: #5c564d;
-  --accent: #2f5d50;
-  --accent-hover: #244a40;
+  color: #1a2a3a;
+  background-color: #e8f1f8;
+  --surface: #f5f9fc;
+  --surface-muted: #eef5fa;
+  --border: #c5d6e4;
+  --text-muted: #4a5d6e;
+  --accent: #2b6cb0;
+  --accent-hover: #234e80;
   --warn-bg: #fff4df;
   --warn-border: #e8c98d;
   --error-bg: #fdecec;
@@ -439,7 +439,7 @@ textarea {
 }
 
 .button.secondary:hover:not(:disabled) {
-  background: #ebe5dc;
+  background: #d9e8f4;
 }
 
 .button-link {
@@ -509,6 +509,25 @@ textarea {
 
 .field-block dd {
   margin: 0.15rem 0 0;
+}
+
+.dimension-group {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.dimension-group:first-of-type {
+  margin-top: 0.5rem;
+  padding-top: 0;
+  border-top: none;
+}
+
+.dimension-heading {
+  margin: 0 0 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 650;
+  color: var(--accent);
 }
 
 .compact-list {
@@ -682,14 +701,14 @@ textarea {
 
 @media (prefers-color-scheme: dark) {
   :root {
-    color: #ece7df;
-    background-color: #12100e;
-    --surface: #1b1916;
-    --surface-muted: #24211d;
-    --border: #3a3530;
-    --text-muted: #b8b0a4;
-    --accent: #6fae98;
-    --accent-hover: #5a947f;
+    color: #dce8f2;
+    background-color: #0e1620;
+    --surface: #152231;
+    --surface-muted: #1a2b3d;
+    --border: #2f4560;
+    --text-muted: #9bb0c4;
+    --accent: #5b9bd5;
+    --accent-hover: #7aafde;
     --warn-bg: #2a2318;
     --warn-border: #6f5730;
     --error-bg: #2a1717;
@@ -698,10 +717,10 @@ textarea {
 
   input,
   textarea {
-    background: #141210;
+    background: #101a26;
   }
 
   .button.secondary:hover:not(:disabled) {
-    background: #2d2924;
+    background: #1e3145;
   }
 }

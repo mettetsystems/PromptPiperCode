@@ -32,7 +32,7 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
 
 def create_app() -> FastAPI:
     app = FastAPI(
-        title="Prompt Piper API",
+        title="PromptPiperCode API",
         description="Local-first prompt engineering workbench",
         version=__version__,
         lifespan=lifespan,

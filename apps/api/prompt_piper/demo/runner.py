@@ -58,7 +58,7 @@ def build_demo_service(
     )
 
 
-def run_implementation_report_demo(
+def run_coding_prompt_demo(
     *,
     registry_path: Path,
     artifacts_path: Path,
@@ -139,3 +139,7 @@ def execute_demo_flow(
         artifact_dir=artifact_dir,
         artifact_paths=artifact_paths,
     )
+
+
+# Back-compat alias for older imports / scripts.
+run_implementation_report_demo = run_coding_prompt_demo

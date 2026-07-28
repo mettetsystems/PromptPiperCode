@@ -3,50 +3,79 @@ from uuid import UUID, uuid4
 
 import pytest
 from prompt_piper_api.domain import (
+    CoreTaskScope,
     OptimizationTargets,
     PromptDraft,
     PromptSession,
     RequirementCard,
     SessionState,
+    TechnicalContext,
 )
 from pydantic import ValidationError
 
 
 def test_requirement_card_creation_with_full_payload() -> None:
     card = RequirementCard(
-        objective="Summarize quarterly reports for executives",
-        audience="C-suite readers with limited time",
-        input_materials=["Q1_report.pdf", "Q2_report.pdf"],
-        constraints=["Max 500 words", "No speculative financial advice"],
-        desired_output_shape="Bulleted executive summary with risks and opportunities",
-        tone_style="Direct, neutral, board-ready",
-        forbidden_content_actions=["Invent metrics", "Recommend trades"],
-        success_criteria=["Captures top 3 risks", "Cites source sections"],
-        language="en",
-        optimization_targets=OptimizationTargets(
-            richness="Add sector context where material",
-            density="Prefer tight phrasing",
-            efficiency="Single-pass summary",
-            denoising="Remove duplicate figures",
-            deconfliction="Resolve conflicting revenue statements",
+        technical_context=TechnicalContext(
+            environment="Python 3.12 + FastAPI",
+            integration_points=["UserCreate schema", "create_user()"],
+            dependency_policy="allow listed third-party packages",
+            forbidden_libraries=["requests"],
         ),
-        unresolved_fields=["tone_style"],
+        core_task_scope=CoreTaskScope(
+            task_type="new feature logic",
+            objective="Add a FastAPI endpoint that creates users via Pydantic models",
+            out_of_scope=["Auth redesign", "Frontend changes"],
+        ),
+        inputs_outputs_contracts={
+            "inputs": "JSON body with email and name",
+            "output_contract": "201 JSON with id, email, name",
+            "examples": ['{"email": "a@b.com", "name": "Ada"}'],
+        },
+        architectural_rules={
+            "design_patterns": ["repository pattern"],
+            "coding_style": "typed, explicit error handling",
+            "non_functional": ["Max 200ms p95 latency", "No speculative DB writes"],
+        },
+        edge_cases_error_strategy={
+            "failure_handling": "raise HTTPException with problem details",
+            "bad_inputs": ["missing email", "duplicate email"],
+            "edge_cases": ["unicode names"],
+        },
+        response_formatting={
+            "explanation_level": "brief rationale then code",
+            "verbosity": "concise",
+            "extra_artifacts": ["pytest unit tests"],
+        },
+        optimization_targets=OptimizationTargets(
+            richness="Include schema validation details",
+            density="Prefer tight phrasing",
+            efficiency="Single-file change when possible",
+            denoising="Remove unrelated CRUD endpoints",
+            deconfliction="Resolve conflicting status codes",
+        ),
+        unresolved_fields=["response_formatting.explanation_level"],
     )
 
-    assert card.objective.startswith("Summarize")
-    assert card.input_materials == ["Q1_report.pdf", "Q2_report.pdf"]
-    assert card.optimization_targets.richness == "Add sector context where material"
-    assert card.unresolved_fields == ["tone_style"]
+    assert card.objective.startswith("Add a FastAPI")
+    assert card.technical_context.integration_points == ["UserCreate schema", "create_user()"]
+    assert card.optimization_targets.richness == "Include schema validation details"
+    assert card.unresolved_fields == ["response_formatting.explanation_level"]
 
 
 def test_requirement_card_creation_minimal_defaults() -> None:
-    card = RequirementCard(objective="Draft a user interview guide")
+    card = RequirementCard(core_task_scope={"objective": "Draft a pytest suite for the auth module"})
 
-    assert card.objective == "Draft a user interview guide"
-    assert card.language == "en"
-    assert card.input_materials == []
+    assert card.objective == "Draft a pytest suite for the auth module"
+    assert card.technical_context.environment == ""
+    assert card.inputs_outputs_contracts.examples == []
     assert card.optimization_targets.richness is None
     assert card.optimization_targets.deconfliction is None
+
+
+def test_requirement_card_rejects_top_level_objective_kwarg() -> None:
+    with pytest.raises(ValidationError):
+        RequirementCard(objective="not allowed as constructor kwarg")
 
 
 def test_optimization_targets_has_exactly_five_optional_slots() -> None:
@@ -126,8 +155,11 @@ def test_unresolved_fields_default_to_empty_list() -> None:
 
     assert card.unresolved_fields == []
 
-    card.mark_unresolved("objective", "audience")
-    assert card.unresolved_fields == ["objective", "audience"]
+    card.mark_unresolved("core_task_scope.objective", "technical_context.environment")
+    assert card.unresolved_fields == [
+        "core_task_scope.objective",
+        "technical_context.environment",
+    ]
 
     with pytest.raises(ValueError, match="Unknown requirement card fields"):
         card.mark_unresolved("not_a_real_field")
@@ -178,7 +210,9 @@ def test_prompt_session_round_trip_preserves_nested_requirement_card() -> None:
         id=UUID("00000000-0000-4000-8000-000000000001"),
         title="Support macro",
         state=SessionState.EDIT,
-        requirement_card=RequirementCard(objective="Reply to billing questions"),
+        requirement_card=RequirementCard(
+            core_task_scope={"objective": "Implement password-reset API handlers"}
+        ),
         created_at=datetime(2026, 6, 15, 12, 0, tzinfo=UTC),
         updated_at=datetime(2026, 6, 15, 12, 30, tzinfo=UTC),
     )
@@ -187,4 +221,4 @@ def test_prompt_session_round_trip_preserves_nested_requirement_card() -> None:
 
     assert restored.id == session.id
     assert restored.state is SessionState.EDIT
-    assert restored.requirement_card.objective == "Reply to billing questions"
+    assert restored.requirement_card.objective == "Implement password-reset API handlers"

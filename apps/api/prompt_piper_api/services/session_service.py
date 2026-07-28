@@ -126,7 +126,7 @@ def _clarification_payload(
 
 
 class SessionService:
-    """Orchestrates the Prompt Piper session state machine."""
+    """Orchestrates the PromptPiperCode session state machine."""
 
     def __init__(
         self,
@@ -412,6 +412,9 @@ class SessionService:
                 body=current.body,
                 requirement_card=session.requirement_card,
                 session_id=session.id,
+                domain="coding",
+                task_family=session.requirement_card.core_task_scope.task_type,
+                output_form=session.requirement_card.inputs_outputs_contracts.output_contract,
             )
             registry_warning = registry_result.warning
 

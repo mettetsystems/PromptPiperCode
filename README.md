@@ -1,14 +1,15 @@
 <p align="center">
-  <img src="assets/logo/logo.svg" alt="Prompt Piper" width="280" />
+  <img src="assets/logo/logo.svg" alt="PromptPiperCode" width="280" />
 </p>
 
-Local-first prompt engineering workbench. Design, clarify, edit, finalize, optimize, store, and retrieve prompts on your machine. Only a user-approved final prompt may be sent to an external model, and only when you explicitly choose to.
+Local-first **coding prompt** workbench. Design, clarify, edit, finalize, optimize, store, and retrieve coding prompts on your machine across six dimensions. Only a user-approved final prompt may be sent to an external model, and only when you explicitly choose to.
 
 ### Workflow highlights
 
-- **Persistent sessions** — progress survives browser refresh and API restarts (`SESSIONS_PATH`, default `./data/sessions/`).
+- **Six coding dimensions** — Technical Context; Core Task & Scope; Inputs/Outputs & Contracts; Architectural Rules; Edge Cases & Errors; Response Formatting.
+- **Dual export** — rendered `canonical_prompt` / `optimized_prompt` plus structured `coding_prompt_spec.json` and `.yaml`.
+- **Persistent sessions** — progress survives browser refresh and API restarts (`SESSIONS_PATH`, default `./data/sessions/`). **Breaking schema note:** clear `./data/sessions/` after upgrading from the general-purpose card format.
 - **Rich clarification** — multi-select quick replies plus custom text; optional **Get model suggestions** per question (CPU-fast ranker by default).
-- **Expanded requirement card** — background, persona, verbosity, examples, edge cases, and more feed the draft and quality gate.
 - **Step navigation** — revisit earlier steps from the workflow stepper; **re-open** edit, similarity, or optimization when you need to change course mid-session.
 - **Closed completed sessions** — exported sessions are read-only for audit; start a new session with **Use as template** from the Complete page.
 - **Binding-aware approval** — the pre-inference gate scores optimized prompts against constraint-graph bindings (not every optional card field), and the optimizer preserves those bindings during token reduction.
@@ -77,7 +78,7 @@ make test
 
 ## Fedora setup
 
-Prompt Piper is developed and tested on Fedora first. Install native dev tools:
+PromptPiperCode is developed and tested on Fedora first. Install native dev tools:
 
 ```bash
 # Python 3.12, Node, build tools, Podman
@@ -93,7 +94,7 @@ For PDF/HTML export inside Podman, dependencies are pre-installed in `infra/Cont
 
 ## Podman setup (Fedora, local-first, no cloud)
 
-Prompt Piper runs entirely through Podman containers. No Docker Desktop, Kubernetes, or cloud services are required for v1.
+PromptPiperCode runs entirely through Podman containers. No Docker Desktop, Kubernetes, or cloud services are required for v1.
 
 ### Quick start on Fedora
 
@@ -160,7 +161,7 @@ Bind mounts use the `:Z` flag for rootless Podman on Fedora (SELinux).
 
 ### Boot-time persistence (Quadlet)
 
-To run Prompt Piper as user systemd services that start at login/boot:
+To run PromptPiperCode as user systemd services that start at login/boot:
 
 ```bash
 # Install systemd Quadlet units for user session
@@ -224,7 +225,7 @@ podman build -f infra/Containerfile.web -t prompt-piper-web .
 
 ## Local model endpoint setup
 
-Prompt Piper talks to an **OpenAI-compatible** server for clarification suggestions, draft generation, and optional chat. Clarification **ranking and extraction stay CPU-fast** unless you click **Get model suggestions** or your setup wizard enabled a local model.
+PromptPiperCode talks to an **OpenAI-compatible** server for clarification suggestions, draft generation, and optional chat. Clarification **ranking and extraction stay CPU-fast** unless you click **Get model suggestions** or your setup wizard enabled a local model.
 
 `make dev-api` runs `ensure_llm`: it detects GPU memory, can start `llama-server` with a configured GGUF, or falls back to CPU-only mode (rule-based clarification). Stop a managed server with `make llama-down`.
 
@@ -379,7 +380,7 @@ make typecheck    # mypy on API package
 make format       # ruff format
 make eval         # pre-inference quality gate regression suite
 make ensure-llm   # GPU probe + llama-server (also runs via dev-api)
-make llama-down   # stop Prompt Piper-managed llama-server
+make llama-down   # stop PromptPiperCode-managed llama-server
 ```
 
 ## Worker container
@@ -420,7 +421,7 @@ make test-web      # frontend unit tests (vitest)
 make lint          # ruff
 make typecheck     # mypy
 make build-web     # production Vite build
-make demo          # end-to-end implementation-report demo
+make demo          # end-to-end coding-prompt demo (demo/coding_prompt.yaml)
 ```
 
 ### Remaining / planned

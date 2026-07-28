@@ -41,12 +41,18 @@ def compress_abstract(abstract: str, body: str, *, max_len: int = 400) -> str:
 
 def build_lessons_learned(card: RequirementCard) -> str:
     parts: list[str] = []
-    if card.success_criteria:
-        parts.append("Success criteria: " + "; ".join(card.success_criteria))
-    if card.constraints:
-        parts.append("Constraints: " + "; ".join(card.constraints))
-    if card.forbidden_content_actions:
-        parts.append("Avoid: " + "; ".join(card.forbidden_content_actions))
+    if card.architectural_rules.non_functional:
+        parts.append(
+            "Non-functional: " + "; ".join(card.architectural_rules.non_functional)
+        )
+    if card.core_task_scope.out_of_scope:
+        parts.append("Out of scope: " + "; ".join(card.core_task_scope.out_of_scope))
+    if card.edge_cases_error_strategy.edge_cases:
+        parts.append(
+            "Edge cases: " + "; ".join(card.edge_cases_error_strategy.edge_cases)
+        )
+    if card.technical_context.forbidden_libraries:
+        parts.append("Avoid libraries: " + "; ".join(card.technical_context.forbidden_libraries))
     return "\n".join(parts) if parts else "No lessons captured yet."
 
 

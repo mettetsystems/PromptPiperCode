@@ -24,13 +24,13 @@ def service() -> SessionService:
 
 
 def test_ranker_uses_high_value_field_priority(ranker: ClarificationQuestionRanker) -> None:
-    card = RequirementCard(objective="Summarize reports")
+    card = RequirementCard(core_task_scope={"objective": "Add FastAPI user create endpoint"})
     ranked = ranker.rank(card)
 
     assert [question.field_name for question in ranked[:3]] == [
-        "desired_output_shape",
-        "audience",
-        "constraints",
+        "core_task_scope.task_type",
+        "technical_context.environment",
+        "inputs_outputs_contracts.output_contract",
     ]
 
 
@@ -63,7 +63,7 @@ def test_clarification_loop_reaches_draft_at_gate(client: TestClient) -> None:
     assert create.json()["clarification_question_number"] == 1
     assert create.json()["current_draft"] is None
 
-    first = client.post(f"/sessions/{session_id}/answer", json={"answer": "engineering team"})
+    first = client.post(f"/sessions/{session_id}/answer", json={"answer": "new feature logic"})
     assert first.status_code == 200
     assert first.json()["session"]["state"] == SessionState.CLARIFYING
     assert first.json()["current_draft"] is None
@@ -71,7 +71,7 @@ def test_clarification_loop_reaches_draft_at_gate(client: TestClient) -> None:
     payload = drive_client_session_to_edit(
         client,
         session_id,
-        answers=["bulleted summary"],
+        answers=["Python with FastAPI", "Markdown changelog string"],
     )
     assert payload["session"]["state"] == SessionState.EDIT
     assert payload["current_draft"] is not None
@@ -104,7 +104,7 @@ def test_free_text_answer_is_accepted(service: SessionService) -> None:
     service.answer_clarification(session_id, "support agents handling billing questions")
     record = service.get_session(session_id)
     assert (
-        getattr(record.session.requirement_card, field)
+        record.session.requirement_card.get_leaf(field)
         == "support agents handling billing questions"
     )
 
@@ -132,17 +132,19 @@ def test_format_clarification_question_example_style() -> None:
     text = format_clarification_question(
         question_number=1,
         total_questions=15,
-        prompt="who is the report for?",
+        prompt="what is the precise stack (language version, framework, key dependencies)?",
         quick_reply_options=[
-            "engineering team",
-            "executive stakeholders",
-            "mixed technical and business audience",
+            "Python with FastAPI and Pydantic",
+            "TypeScript / React",
+            "stdlib only",
             "unspecified",
         ],
     )
 
-    assert text.startswith("Quick question 1 of 15: who is the report for?")
-    assert "- engineering team" in text
+    assert text.startswith(
+        "Quick question 1 of 15: what is the precise stack (language version, framework, key dependencies)?"
+    )
+    assert "- Python with FastAPI and Pydantic" in text
     assert "- unspecified" in text
 
 
@@ -150,10 +152,10 @@ def test_extractor_marks_unspecified_without_inventing_values() -> None:
     card = RequirementCard()
     extractor = RequirementCardExtractor()
 
-    extractor.apply_answer(card, "audience", "unspecified")
+    extractor.apply_answer(card, "technical_context.environment", "unspecified")
 
-    assert card.audience == ""
-    assert "audience" in card.unresolved_fields
+    assert card.technical_context.environment == ""
+    assert "technical_context.environment" in card.unresolved_fields
 
 
 def test_extractor_applies_multiple_quick_replies_to_list_field() -> None:
@@ -162,11 +164,11 @@ def test_extractor_applies_multiple_quick_replies_to_list_field() -> None:
 
     extractor.apply_answer(
         card,
-        "constraints",
+        "architectural_rules.non_functional",
         "keep under 500 words; no jargon; cite sources",
     )
 
-    assert card.constraints == [
+    assert card.architectural_rules.non_functional == [
         "keep under 500 words",
         "no jargon",
         "cite sources",
@@ -179,9 +181,9 @@ def test_extractor_applies_multiple_quick_replies_to_string_field() -> None:
 
     extractor.apply_answer(
         card,
-        "audience",
-        "engineering team; executive stakeholders",
+        "technical_context.environment",
+        "Python with FastAPI; Pydantic v2",
     )
 
-    assert card.audience == "engineering team; executive stakeholders"
-    assert "audience" not in card.unresolved_fields
+    assert card.technical_context.environment == "Python with FastAPI; Pydantic v2"
+    assert "technical_context.environment" not in card.unresolved_fields

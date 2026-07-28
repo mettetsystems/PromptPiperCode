@@ -6,8 +6,9 @@ from prompt_piper_api.domain.optimization import ConstraintGraph, ConstraintSlot
 from prompt_piper_api.domain.requirement_card import RequirementCard
 
 _SECTION_RE = re.compile(
-    r"^(Mission|Context|Constraints|Style|Output contract|Acceptance criteria|"
-    r"Forbidden content or actions)\n-+\n",
+    r"^(Technical Context|Core Task and Scope|Inputs, Outputs, and Contracts|"
+    r"Architectural Rules and Constraints|Edge Cases and Error Strategy|"
+    r"Response Formatting)\n-+\n",
     re.MULTILINE | re.IGNORECASE,
 )
 
@@ -19,7 +20,7 @@ _FILLER_PATTERNS = (
 _CONFLICT_RULES: tuple[tuple[str, str, str, bool], ...] = (
     (
         r"\b(exhaustive|comprehensive|all details)\b",
-        r"\b(minimal tokens|be concise|keep it brief|short answer)\b",
+        r"\b(minimal tokens|be concise|keep it brief|short answer|code only)\b",
         "be exhaustive vs minimal tokens",
         True,
     ),
@@ -64,27 +65,32 @@ class ConstraintGraphPass:
 
         if card.objective.strip():
             slots[ConstraintSlot.OBJECTIVE.value].append(card.objective.strip())
-        mission = extract_section(body, "Mission")
-        slots[ConstraintSlot.OBJECTIVE.value].extend(mission)
-
-        if card.audience.strip():
-            slots[ConstraintSlot.AUDIENCE.value].append(card.audience.strip())
-        for line in extract_section(body, "Context"):
-            if line.lower().startswith("audience:"):
-                slots[ConstraintSlot.AUDIENCE.value].append(line.split(":", 1)[1].strip())
-
-        slots[ConstraintSlot.SCOPE.value].extend(card.input_materials)
-        slots[ConstraintSlot.EXCLUSIONS.value].extend(card.forbidden_content_actions)
-
-        if card.desired_output_shape.strip():
-            slots[ConstraintSlot.FORMAT.value].append(card.desired_output_shape.strip())
-        slots[ConstraintSlot.FORMAT.value].extend(extract_section(body, "Output contract"))
-
-        slots[ConstraintSlot.EXCLUSIONS.value].extend(
-            line for line in extract_section(body, "Forbidden content or actions")
+        slots[ConstraintSlot.OBJECTIVE.value].extend(
+            extract_section(body, "Core Task and Scope")
         )
 
-        for constraint in card.constraints:
+        if card.technical_context.environment.strip():
+            slots[ConstraintSlot.AUDIENCE.value].append(
+                card.technical_context.environment.strip()
+            )
+        for line in extract_section(body, "Technical Context"):
+            if line.lower().startswith("environment:"):
+                slots[ConstraintSlot.AUDIENCE.value].append(line.split(":", 1)[1].strip())
+
+        slots[ConstraintSlot.SCOPE.value].extend(card.technical_context.integration_points)
+        slots[ConstraintSlot.SCOPE.value].extend(card.core_task_scope.out_of_scope)
+        slots[ConstraintSlot.EXCLUSIONS.value].extend(card.technical_context.forbidden_libraries)
+        slots[ConstraintSlot.EXCLUSIONS.value].extend(card.core_task_scope.out_of_scope)
+
+        if card.inputs_outputs_contracts.output_contract.strip():
+            slots[ConstraintSlot.FORMAT.value].append(
+                card.inputs_outputs_contracts.output_contract.strip()
+            )
+        slots[ConstraintSlot.FORMAT.value].extend(
+            extract_section(body, "Inputs, Outputs, and Contracts")
+        )
+
+        for constraint in card.architectural_rules.non_functional:
             lowered = constraint.lower()
             if "token" in lowered or "length" in lowered:
                 slots[ConstraintSlot.TOKEN_BUDGET.value].append(constraint)
@@ -92,19 +98,29 @@ class ConstraintGraphPass:
                 slots[ConstraintSlot.MUST_CITE.value].append(constraint)
             elif "vendor" in lowered:
                 slots[ConstraintSlot.FINAL_VENDOR.value].append(constraint)
-            elif "artifact" in lowered or "attachment" in lowered:
+            elif "artifact" in lowered or "attachment" in lowered or "test" in lowered:
                 slots[ConstraintSlot.ARTIFACT_REQUIRED.value].append(constraint)
             elif "concise" in lowered or "brief" in lowered or "short" in lowered:
                 slots[ConstraintSlot.VERBOSITY.value].append(constraint)
             else:
                 slots[ConstraintSlot.SCOPE.value].append(constraint)
 
-        slots[ConstraintSlot.SCOPE.value].extend(extract_section(body, "Constraints"))
+        slots[ConstraintSlot.SCOPE.value].extend(card.architectural_rules.design_patterns)
         slots[ConstraintSlot.SCOPE.value].extend(
-            line.removeprefix("Meet this criterion: ").strip()
-            for line in extract_section(body, "Acceptance criteria")
-            if not line.lower().startswith("unspecified")
+            extract_section(body, "Architectural Rules and Constraints")
         )
+        slots[ConstraintSlot.SCOPE.value].extend(
+            extract_section(body, "Edge Cases and Error Strategy")
+        )
+
+        if card.response_formatting.verbosity.strip():
+            slots[ConstraintSlot.VERBOSITY.value].append(
+                card.response_formatting.verbosity.strip()
+            )
+        if card.response_formatting.extra_artifacts:
+            slots[ConstraintSlot.ARTIFACT_REQUIRED.value].extend(
+                card.response_formatting.extra_artifacts
+            )
 
         binding = self._binding_instructions(slots)
         contradictions = self._detect_contradictions(body, slots)

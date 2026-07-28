@@ -10,17 +10,17 @@ _PLAIN_TEXT_FORBIDDEN = (
 )
 
 _EXPECTED_SECTIONS = (
-    "mission",
-    "context",
-    "constraints",
-    "style",
-    "output contract",
-    "acceptance",
+    "technical context",
+    "core task and scope",
+    "inputs, outputs, and contracts",
+    "architectural rules and constraints",
+    "edge cases and error strategy",
+    "response formatting",
 )
 
 
 def format_adherence_score(body: str) -> float:
-    """Return 1.00 when the prompt follows the plain-text section contract."""
+    """Return 1.00 when the prompt follows the plain-text coding section contract."""
     if not body.strip():
         return 0.0
     for pattern in _PLAIN_TEXT_FORBIDDEN:

@@ -41,6 +41,8 @@ _EXPORT_PATH_KEYS: dict[str, str] = {
     "optimized_md": "optimized_prompt.md",
     "optimized_txt": "optimized_prompt.txt",
     "requirement_card": "requirement_card.json",
+    "coding_prompt_spec_json": "coding_prompt_spec.json",
+    "coding_prompt_spec_yaml": "coding_prompt_spec.yaml",
     "metrics": "metrics.json",
     "similarity_report": "similarity_report.json",
     "lessons_learned": "lessons_learned.md",
@@ -116,7 +118,7 @@ class _ExportWriteState:
 
 
 class ArtifactExportService:
-    """Write Prompt Piper exports to unique folders under the Documents export root."""
+    """Write PromptPiperCode exports to unique folders under the Documents export root."""
 
     def __init__(
         self,
@@ -531,6 +533,19 @@ class ArtifactExportService:
             export_dir,
             "requirement_card.json",
             requirement_card,
+            state=state,
+        )
+        coding_spec = requirement_card.coding_spec_dict()
+        self.write_json_artifact(
+            export_dir,
+            "coding_prompt_spec.json",
+            coding_spec,
+            state=state,
+        )
+        self.write_yaml_artifact(
+            export_dir,
+            "coding_prompt_spec.yaml",
+            coding_spec,
             state=state,
         )
 

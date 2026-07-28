@@ -35,7 +35,7 @@ export function ExportPage({ sessionId, session, readOnly = false }: ExportPageP
     <div className="page">
       <PageHeader
         title="Export artifacts"
-        subtitle="Generate stable local artifacts from the approved canonical and optimized prompts."
+        subtitle="Generate stable local artifacts: rendered prompts plus coding_prompt_spec.json/yaml."
       />
 
       {session.registry_warning && <WarningBanner message={session.registry_warning} />}

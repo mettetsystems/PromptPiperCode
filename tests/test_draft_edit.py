@@ -41,7 +41,10 @@ def test_adding_requirement_updates_draft(service: SessionService) -> None:
     assert edited.edit_intent is EditIntent.ADD_REQUIREMENT
     assert edited.revised_draft is not None
     assert edited.revised_draft.body != before.body
-    assert "prefer open-source tooling" in edited.updated_requirement_card.success_criteria[-1]
+    assert (
+        "prefer open-source tooling"
+        in edited.updated_requirement_card.architectural_rules.non_functional[-1]
+    )
 
 
 def test_tone_change_updates_draft(service: SessionService) -> None:
@@ -51,7 +54,7 @@ def test_tone_change_updates_draft(service: SessionService) -> None:
     edited = service.edit_draft(session_id, "Change tone to analytical")
 
     assert edited.edit_intent is EditIntent.CHANGE_TONE
-    assert edited.updated_requirement_card.tone_style == "analytical"
+    assert edited.updated_requirement_card.response_formatting.explanation_level == "analytical"
     assert "analytical" in edited.revised_draft.body.lower()
     assert edited.revised_draft.body != before_body
 
@@ -62,7 +65,10 @@ def test_output_shape_change_updates_draft(service: SessionService) -> None:
     edited = service.edit_draft(session_id, "Change output shape to markdown table")
 
     assert edited.edit_intent is EditIntent.CHANGE_OUTPUT_SHAPE
-    assert edited.updated_requirement_card.desired_output_shape == "markdown table"
+    assert (
+        edited.updated_requirement_card.inputs_outputs_contracts.output_contract
+        == "markdown table"
+    )
     assert "markdown table" in edited.revised_draft.body
 
 
@@ -127,7 +133,9 @@ def test_edit_api_response_includes_revised_fields(client: TestClient) -> None:
     assert body["edit_intent"] == EditIntent.CHANGE_TONE
     assert body["revised_draft"]["version"] == 2
     assert body["semantic_diff"]
-    assert body["updated_requirement_card"]["tone_style"] == "analytical"
+    assert body["updated_requirement_card"]["response_formatting"]["explanation_level"] == (
+        "analytical"
+    )
     assert body["session"]["state"] == SessionState.EDIT
 
 

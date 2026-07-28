@@ -63,13 +63,17 @@ def test_re_export_creates_new_unique_folder_without_overwriting(tmp_path: Path)
     record.session.requirement_card.unresolved_fields = []
     record.drafts[-1].body = "\n".join(
         [
-            "Mission",
-            "-------",
-            "Summarize weekly engineering status for leadership review.",
+            "Technical Context",
+            "-----------------",
+            "Environment: Python with FastAPI and Pydantic",
             "",
-            "Output contract",
-            "----------------",
-            "Bulleted summary with risks and next steps.",
+            "Core Task and Scope",
+            "-------------------",
+            "Objective: Add FastAPI endpoint for weekly engineering status summaries.",
+            "",
+            "Inputs, Outputs, and Contracts",
+            "------------------------------",
+            "Output contract: JSON with blockers, owners, and next steps.",
         ]
     )
     service.finalize(session_id)

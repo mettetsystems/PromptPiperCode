@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sys
 
-from prompt_piper.demo.runner import run_implementation_report_demo
+from prompt_piper.demo.runner import run_coding_prompt_demo
 from prompt_piper.demo.scenario import repo_root
 
 
@@ -16,7 +16,7 @@ def main() -> int:
         path.mkdir(parents=True, exist_ok=True)
 
     try:
-        result = run_implementation_report_demo(
+        result = run_coding_prompt_demo(
             registry_path=registry_path,
             artifacts_path=artifacts_path,
             audit_path=audit_path,

@@ -86,7 +86,7 @@ def test_precision_suggestion_service_uses_wordnet_fallback(
     result = service.suggest(
         finding=finding,
         body=finding.line,
-        card=RequirementCard(objective="Weekly engineering status summary"),
+        card=RequirementCard(core_task_scope={"objective": "Weekly engineering status summary"}),
     )
     assert result.source is PrecisionSuggestionSource.WORDNET
     assert "deliverable" in result.suggested_replacements

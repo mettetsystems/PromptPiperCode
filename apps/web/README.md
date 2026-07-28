@@ -1,6 +1,7 @@
 # Web app (`apps/web/`)
 
-React 18 + TypeScript + Vite single-page app for the Prompt Piper workflow UI.
+React 18 + TypeScript + Vite single-page app for the **PromptPiperCode** coding-prompt workflow UI (six dimensions, clarify → export).
+
 
 ## Structure
 

@@ -29,7 +29,7 @@ def _create_and_answer_to_draft(client: TestClient, initial_request: str) -> dic
 def test_clarification_loop_before_draft_generation(client: TestClient) -> None:
     payload = _create_and_answer_to_draft(
         client,
-        "Summarize customer interview notes\naudience: engineering leads",
+        "Summarize customer interview notes\nenvironment: Python with FastAPI",
     )
 
     assert payload["session"]["state"] == SessionState.EDIT

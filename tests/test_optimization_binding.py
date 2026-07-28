@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from prompt_piper_api.domain.requirement_card import RequirementCard, OptimizationTargets
+from prompt_piper_api.domain.requirement_card import OptimizationTargets, RequirementCard
 from prompt_piper_api.services.embedding_service import EmbeddingService
 from prompt_piper_api.services.optimization.engine import TokenOptimizationEngine
 from prompt_piper_api.services.pre_inference_metrics_service import PreInferenceMetricsService
@@ -8,75 +8,100 @@ from prompt_piper_api.services.quality_gate_service import QualityGateService
 from prompt_piper_api.services.requirement_capture import RequirementCaptureEvaluator
 
 
-def _mustang_card() -> RequirementCard:
+def _fastapi_card() -> RequirementCard:
     return RequirementCard(
-        objective=(
-            "I would like to write a paper the covers the key part of a Mustang plane "
-            "and how the spinning bit works"
-        ),
-        context_background="research or analysis task",
-        audience=(
-            "mixed technical and business audience; It for a bunch of new people that came "
-            "from the local college trying to improve their skills"
-        ),
-        language="en",
-        constraints=["no speculative claims", "cite sources only", "easy to scan quickly"],
-        tone_style=(
-            "neutral and professional; Don't use really big words for people who are not "
-            "the best at the field"
-        ),
-        desired_output_shape="short paragraph; bulleted summary",
-        success_criteria=["easy to scan quickly"],
-        persona_role="technical writer explaining aviation mechanics",
-        verbosity="moderate length accessible to beginners",
-        edge_cases=["when sources conflict", "when technical terms need defining"],
-        example_outputs=["one-page explainer with bullet summary"],
-        input_materials=["course notes from college workshop"],
-        forbidden_content_actions=["invent historical facts"],
+        core_task_scope={
+            "task_type": "new feature logic",
+            "objective": (
+                "Implement a FastAPI endpoint that creates users with Pydantic validation "
+                "and returns the persisted user record"
+            ),
+            "out_of_scope": ["Auth redesign", "Frontend changes"],
+        },
+        technical_context={
+            "environment": "Python 3.12 with FastAPI and Pydantic v2",
+            "integration_points": ["UserCreate", "UserRead", "create_user()"],
+            "dependency_policy": "allow listed third-party packages",
+            "forbidden_libraries": ["requests"],
+        },
+        inputs_outputs_contracts={
+            "inputs": "JSON body with email and full_name",
+            "output_contract": "201 JSON with id, email, full_name",
+            "examples": ['POST /users {"email":"a@b.com","full_name":"Ada"}'],
+        },
+        architectural_rules={
+            "design_patterns": ["repository pattern", "async/await"],
+            "coding_style": "typed, explicit error handling",
+            "non_functional": [
+                "no speculative claims about schema",
+                "cite existing model fields only",
+                "easy to scan quickly",
+            ],
+        },
+        edge_cases_error_strategy={
+            "failure_handling": "raise HTTPException with problem details",
+            "bad_inputs": ["missing email", "duplicate email"],
+            "edge_cases": ["unicode names", "empty full_name"],
+        },
+        response_formatting={
+            "explanation_level": "brief rationale then code",
+            "verbosity": "concise",
+            "extra_artifacts": ["pytest unit tests"],
+        },
         optimization_targets=OptimizationTargets(richness="include enough detail for newcomers"),
     )
 
 
-def _mustang_canonical() -> str:
+def _fastapi_canonical() -> str:
     return "\n".join(
         [
-            "Mission",
-            "-------",
-            "I would like to write a paper the covers the key part of a Mustang plane "
-            "and how the spinning bit works",
+            "Technical Context",
+            "-----------------",
+            "Environment: Python 3.12 with FastAPI and Pydantic v2",
+            "Integration points: UserCreate; UserRead; create_user()",
+            "Dependency policy: allow listed third-party packages",
+            "Forbidden libraries: requests",
             "",
-            "Context",
-            "-------",
-            "Audience: mixed technical and business audience; It for a bunch of new people "
-            "that came from the local college trying to improve their skills",
-            "Primary language: en",
-            "Background: research or analysis task",
+            "Core Task and Scope",
+            "-------------------",
+            "Task type: new feature logic",
+            "Objective: Implement a FastAPI endpoint that creates users with Pydantic "
+            "validation and returns the persisted user record",
+            "Out of scope: Auth redesign; Frontend changes",
             "",
-            "Constraints",
-            "---------------",
-            "no speculative claims",
-            "cite sources only",
+            "Inputs, Outputs, and Contracts",
+            "------------------------------",
+            "Inputs: JSON body with email and full_name",
+            "Output contract: 201 JSON with id, email, full_name",
+            'Example: POST /users {"email":"a@b.com","full_name":"Ada"}',
+            "",
+            "Architectural Rules and Constraints",
+            "-----------------------------------",
+            "Design patterns: repository pattern; async/await",
+            "Coding style: typed, explicit error handling",
+            "no speculative claims about schema",
+            "cite existing model fields only",
             "easy to scan quickly",
             "",
-            "Style",
-            "-----",
-            "neutral and professional; Don't use really big words for people who are not "
-            "the best at the field",
+            "Edge Cases and Error Strategy",
+            "-----------------------------",
+            "Failure handling: raise HTTPException with problem details",
+            "Bad inputs: missing email; duplicate email",
+            "Handle edge case: unicode names",
+            "Handle edge case: empty full_name",
             "",
-            "Output contract",
-            "----------------",
-            "short paragraph; bulleted summary",
-            "",
-            "Acceptance criteria",
+            "Response Formatting",
             "-------------------",
-            "Meet this criterion: easy to scan quickly",
+            "Explanation level: brief rationale then code",
+            "Verbosity: concise",
+            "Extra artifacts: pytest unit tests",
         ]
     )
 
 
 def test_mustang_like_optimization_passes_binding_capture_gate() -> None:
-    card = _mustang_card()
-    canonical = _mustang_canonical()
+    card = _fastapi_card()
+    canonical = _fastapi_canonical()
     optimization = TokenOptimizationEngine().optimize(canonical, card)
     metrics_service = PreInferenceMetricsService(
         capture_evaluator=RequirementCaptureEvaluator(EmbeddingService(prefer_fallback=True)),

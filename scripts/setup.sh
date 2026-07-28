@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Interactive Prompt Piper setup wizard (model / CPU-only configuration).
+# Interactive PromptPiperCode setup wizard (model / CPU-only configuration).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

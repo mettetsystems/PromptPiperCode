@@ -1,6 +1,6 @@
-# Prompt Piper Quadlets (Fedora / rootless Podman)
+# PromptPiperCode Quadlets (Fedora / rootless Podman)
 
-Run Prompt Piper as **persistent user systemd services** that start at boot.
+Run PromptPiperCode as **persistent user systemd services** that start at boot.
 
 Quadlets live in `~/.config/containers/systemd/` and are managed with `systemctl --user`.
 

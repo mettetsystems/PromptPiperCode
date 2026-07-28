@@ -1,8 +1,8 @@
-# Prompt Piper FastAPI backend.
+# PromptPiperCode FastAPI backend.
 # Build first: podman build -f infra/Containerfile.api -t localhost/prompt-piper-api:latest .
 
 [Unit]
-Description=Prompt Piper API
+Description=PromptPiperCode API
 After=network-online.target prompt-piper-postgres.service
 Wants=network-online.target
 Requires=prompt-piper-postgres.service

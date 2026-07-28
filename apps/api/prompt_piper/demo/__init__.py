@@ -1,1 +1,1 @@
-"""Local demo flows for Prompt Piper."""
+"""Local demo flows for PromptPiperCode."""

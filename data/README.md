@@ -4,9 +4,9 @@ Local-only storage created at dev/runtime. **Do not commit session exports or re
 
 | Directory | Purpose | Env variable |
 |-----------|---------|--------------|
-| `sessions/` | JSON files — one per in-progress or completed session | `SESSIONS_PATH` (default `./data/sessions`) |
-| `registry/` | Git repo of finalized canonical prompts (`metadata.yaml`, bodies) | `REGISTRY_PATH` / `PROMPT_PIPER_REGISTRY_ROOT` |
-| `artifacts/` | Timestamped export bundles per prompt | `ARTIFACTS_PATH` / `PROMPT_PIPER_ARTIFACT_ROOT` |
+| `sessions/` | JSON files — one per in-progress or completed session (clear after coding-card schema upgrades) | `SESSIONS_PATH` (default `./data/sessions`) |
+| `registry/` | Git repo of finalized coding prompts (`metadata.yaml`, bodies, coding_prompt_spec) | `REGISTRY_PATH` / `PROMPT_PIPER_REGISTRY_ROOT` |
+| `artifacts/` | Timestamped export bundles (rendered prompts + coding specs) | `ARTIFACTS_PATH` / `PROMPT_PIPER_ARTIFACT_ROOT` |
 | `audit/` | Append-only audit logs (`events.jsonl`, `external_inference.jsonl`) | `AUDIT_LOG_PATH` |
 | `model-cache/` | Downloaded embedding models (Hugging Face) | `PROMPT_PIPER_MODEL_CACHE`, `HF_HOME` |
 | `postgres/` | PostgreSQL data files (Podman bind mount) | `DATABASE_URL` in compose |

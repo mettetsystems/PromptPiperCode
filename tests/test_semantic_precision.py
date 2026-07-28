@@ -39,7 +39,7 @@ def test_empty_body_scores_perfectly() -> None:
 
 def test_apply_replacement_updates_line() -> None:
     evaluator = SemanticPrecisionEvaluator()
-    body = "Mission\n-------\nDeliver a great outcome for the team."
+    body = "Core Task and Scope\n-------------------\nDeliver a great outcome for the team."
     finding = evaluator.evaluate(body).findings[0]
     updated = evaluator.apply_replacement(
         body,

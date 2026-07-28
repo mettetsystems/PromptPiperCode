@@ -1,8 +1,8 @@
-# Shared Podman network for Prompt Piper container units.
+# Shared Podman network for PromptPiperCode container units.
 # Install: scripts/install-quadlets.sh --method containers
 
 [Unit]
-Description=Prompt Piper Podman network
+Description=PromptPiperCode Podman network
 Before=prompt-piper-postgres.service prompt-piper-api.service prompt-piper-web.service
 
 [Network]

@@ -80,11 +80,11 @@ def test_similarity_score_threshold_triggers_warning(
     similarity_service: SimilarityCheckService,
 ) -> None:
     body = (
-        "Mission: summarize weekly status for engineering managers.\n"
-        "Context: include risks and next steps.\n"
+        "Core Task and Scope: summarize weekly status for engineering managers.\n"
+        "Technical Context: include risks and next steps.\n"
         "Output contract: bulleted summary."
     )
-    card = RequirementCard(objective="Weekly status summary")
+    card = RequirementCard(core_task_scope={"objective": "Weekly status summary"})
     artifact_paths = {"canonical_txt": "canonical_prompt.txt"}
 
     similarity_service.check_and_index(
@@ -113,14 +113,14 @@ def test_similarity_score_threshold_triggers_warning(
 
 
 def test_lower_similarity_does_not_warn(similarity_service: SimilarityCheckService) -> None:
-    card = RequirementCard(objective="Different objectives")
+    card = RequirementCard(core_task_scope={"objective": "Different objectives"})
     artifact_paths = {"canonical_txt": "canonical_prompt.txt"}
 
     similarity_service.check_and_index(
         prompt_id="legal-contract-prior12",
         version=1,
         title="Legal contract review",
-        body="Mission: review vendor contracts for liability clauses and indemnification.",
+        body="Core Task and Scope: review vendor contracts for liability clauses and indemnification.",
         abstract="Contract review",
         requirement_card=card,
         artifact_paths=artifact_paths,
@@ -130,7 +130,7 @@ def test_lower_similarity_does_not_warn(similarity_service: SimilarityCheckServi
         prompt_id="recipe-generator-new34",
         version=1,
         title="Recipe generator",
-        body="Mission: create vegetarian dinner recipes with pantry ingredients and timing.",
+        body="Core Task and Scope: create vegetarian dinner recipes with pantry ingredients and timing.",
         abstract="Recipe generation",
         requirement_card=card,
         artifact_paths=artifact_paths,
@@ -147,12 +147,13 @@ def test_three_documents_are_indexed_per_finalized_prompt(
         prompt_id=prompt_id,
         version=1,
         title="Indexed prompt",
-        body="Mission: draft onboarding checklist for new hires.",
+        body="Core Task and Scope: draft onboarding checklist for new hires.",
         abstract="Onboarding checklist",
         requirement_card=RequirementCard(
-            objective="Onboarding checklist",
-            success_criteria=["Cover first-week tasks"],
-            constraints=["Keep it concise"],
+            core_task_scope={"objective": "Onboarding checklist"},
+            architectural_rules={
+                "non_functional": ["Cover first-week tasks", "Keep it concise"],
+            },
         ),
         artifact_paths={"canonical_txt": "canonical_prompt.txt"},
     )
@@ -162,7 +163,7 @@ def test_three_documents_are_indexed_per_finalized_prompt(
 
 
 def test_prior_prompt_metadata_is_returned(similarity_service: SimilarityCheckService) -> None:
-    body = "Mission: summarize customer interview notes for product discovery."
+    body = "Core Task and Scope: summarize customer interview notes for product discovery."
     artifact_paths = {
         "canonical_txt": "canonical_prompt.txt",
         "metadata": "metadata.yaml",
@@ -174,7 +175,7 @@ def test_prior_prompt_metadata_is_returned(similarity_service: SimilarityCheckSe
         title="Customer interview summary",
         body=body,
         abstract="Interview summary",
-        requirement_card=RequirementCard(objective="Interview summary"),
+        requirement_card=RequirementCard(core_task_scope={"objective": "Interview summary"}),
         artifact_paths=artifact_paths,
     )
 
@@ -184,7 +185,7 @@ def test_prior_prompt_metadata_is_returned(similarity_service: SimilarityCheckSe
         title="Customer interview summary v2",
         body=body,
         abstract="Interview summary",
-        requirement_card=RequirementCard(objective="Interview summary"),
+        requirement_card=RequirementCard(core_task_scope={"objective": "Interview summary"}),
         artifact_paths=artifact_paths,
     )
 

@@ -110,14 +110,21 @@ def test_fallback_when_local_model_is_not_running() -> None:
     assert card.objective == "Write a release note prompt for engineers"
 
     generator = DraftGenerator(client)
-    draft = generator.generate(RequirementCard(objective="Summarize incidents"))
+    draft = generator.generate(
+        RequirementCard(core_task_scope={"objective": "Summarize incidents"})
+    )
 
-    assert "Mission" in draft.body
+    assert "Core Task and Scope" in draft.body
     assert "unspecified" in draft.body.lower()
 
 
 def test_services_use_mock_llm_when_healthy() -> None:
-    card_json = json.dumps({"objective": "LLM parsed objective", "audience": "Developers"})
+    card_json = json.dumps(
+        {
+            "core_task_scope": {"objective": "LLM parsed objective"},
+            "technical_context": {"environment": "Python with FastAPI"},
+        }
+    )
 
     mock = MockLLMClient(
         chat_responder=lambda _messages: card_json,
@@ -126,7 +133,7 @@ def test_services_use_mock_llm_when_healthy() -> None:
     card = extractor.extract("ignored by mock")
 
     assert card.objective == "LLM parsed objective"
-    assert card.audience == "Developers"
+    assert card.technical_context.environment == "Python with FastAPI"
 
 
 def test_local_client_health_check_success() -> None:

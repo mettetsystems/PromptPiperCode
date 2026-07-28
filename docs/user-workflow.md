@@ -1,6 +1,6 @@
 # User workflow
 
-This document describes the end-to-end prompt design flow implemented by `SessionService` and exposed through the web UI and REST API.
+This document describes the end-to-end **coding prompt** design flow implemented by `SessionService` and exposed through the web UI and REST API.
 
 ## Overview
 
@@ -19,17 +19,17 @@ Each step maps to a session state. Invalid actions return HTTP 409 with the curr
 
 Provide:
 
-- `initial_request` — free-text description of what the prompt should do.
-- `title` (optional) — defaults to a truncated objective.
+- `initial_request` — free-text description of the coding prompt to design (stack, task, contracts).
+- `title` (optional) — defaults to a truncated `core_task_scope.objective`.
 
-The system extracts a RequirementCard from the request and enters `clarifying`. The response includes the first clarification question, target field name, and quick-reply options (always ending with `unspecified`).
+The system extracts a nested coding `RequirementCard` (six dimensions) from the request and enters `clarifying`. The response includes the first clarification question, dotted leaf field name, and quick-reply options (always ending with `unspecified`).
 
 Example:
 
 ```json
 {
-  "initial_request": "I need a prompt that helps an internal AI tool generate implementation reports for new features.",
-  "title": "Implementation report prompt"
+  "initial_request": "I need a coding prompt for a FastAPI + Pydantic POST /users endpoint with typed JSON and pytest coverage.",
+  "title": "FastAPI user-create coding prompt"
 }
 ```
 
@@ -39,7 +39,7 @@ Example:
 **API:** `POST /sessions/{id}/answer` with `{ "answer": "..." }`  
 **Early finish:** `POST /sessions/{id}/clarify/complete` when remaining gaps are explicitly `unspecified`
 
-The ranker asks about missing RequirementCard fields by priority (`ClarificationQuestionRanker`), up to **10** questions. The loop ends when:
+The ranker asks about missing coding-dimension leaves by priority (`ClarificationQuestionRanker`), up to **10** questions. The loop ends when:
 
 1. All requirement fields have values, or
 2. Remaining gaps are marked `unspecified` and the user chooses **Generate draft now**, or
@@ -47,31 +47,28 @@ The ranker asks about missing RequirementCard fields by priority (`Clarification
 
 Answers may be quick-reply strings or free text. Answering `unspecified`, `skip`, or `unknown` keeps the field unresolved; the draft will mark it `unspecified` rather than inventing a value.
 
-Typical sequence for an implementation-report prompt:
+Typical sequence for a coding prompt:
 
 | Turn | Field | Example answer |
 |------|-------|----------------|
-| 1 | `audience` | Mixed technical and business audience. |
-| 2 | `desired_output_shape` | Report with sections and risks. |
-| … | … | Additional fields or `unspecified` |
+| 1 | `inputs_outputs_contracts.output_contract` | 201 JSON with id, email, and full_name |
+| 2 | `inputs_outputs_contracts.inputs` | JSON body with email and full_name |
+| … | … | Additional dimension leaves or `unspecified` |
 
 ## 3. Initial draft
 
-Created automatically after the second clarification answer. No separate API call.
+Created automatically when clarification completes. No separate API call.
 
-The draft is plain text with labeled sections:
+The draft is plain text with six coding-dimension sections:
 
-- Mission
-- Context (audience, input materials, language, optimization targets)
-- Constraints
-- Style
-- Output contract
-- Acceptance criteria
-- Forbidden content or actions (when applicable)
+- Technical Context
+- Core Task and Scope
+- Inputs, Outputs, and Contracts
+- Architectural Rules and Constraints
+- Edge Cases and Error Strategy
+- Response Formatting
 
 Missing fields appear as `unspecified`. The response includes `draft.body`, `draft.version` (starts at 1), and updated `requirement_card`.
-
-Implementation-report prompts additionally include section headings for Proposed feature, Architecture, Delivery plan, Key risks, and Mitigations in the output contract.
 
 ## 4. Iterative edits
 
@@ -88,8 +85,8 @@ Available only in `edit` state. Each edit:
 Example instructions:
 
 ```
-Add constraint: prefer open-source alternatives and change tone to analytical
-Change output shape to report with one Mermaid diagram and a short API section
+Add constraint: sanitize email input against injection and keep responses concise
+Change output contract to TypeScript-style interface plus FastAPI handler with pytest
 ```
 
 The response includes `revised_draft`, `semantic_diff`, `change_summary`, and `edit_intent`.
@@ -158,6 +155,7 @@ Requires `approval` state. Writes to `data/artifacts/{prompt_id}/`:
 | `optimized_prompt.txt` / `.md` | Yes |
 | `metadata.yaml` | Yes |
 | `requirement_card.json` | Yes |
+| `coding_prompt_spec.json` / `.yaml` | Yes |
 | `metrics.json` | Yes |
 | `similarity_report.json` | Yes |
 | `lessons_learned.md` | Yes |
@@ -197,7 +195,7 @@ After finalization, prompts appear in the Registry UI (`/registry`, `/registry/{
 
 ## Demo flow
 
-Run the bundled implementation-report scenario:
+Run the bundled coding-prompt scenario:
 
 ```bash
 make demo
@@ -205,7 +203,7 @@ make demo
 
 Prints session ID, prompt ID, registry path, and generated artifact paths under `data/demo/`.
 
-Scenario definition: `demo/implementation_report.yaml`. E2E test: `tests/test_demo_flow.py`.
+Scenario definition: `demo/coding_prompt.yaml`. E2E test: `tests/test_demo_flow.py`.
 
 ## API quick reference
 

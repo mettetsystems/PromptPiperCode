@@ -1,1 +1,1 @@
-"""Interactive first-run setup for Prompt Piper."""
+"""Interactive first-run setup for PromptPiperCode."""

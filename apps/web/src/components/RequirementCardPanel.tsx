@@ -35,10 +35,32 @@ function ListBlock({ label, items }: { label: string; items: string[] | undefine
   );
 }
 
+function DimensionGroup({
+  heading,
+  children,
+}: {
+  heading: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="dimension-group">
+      <h3 className="dimension-heading">{heading}</h3>
+      <dl className="field-list">{children}</dl>
+    </div>
+  );
+}
+
 export function RequirementCardPanel({
   card,
-  title = "Requirement card",
+  title = "Coding dimensions",
 }: RequirementCardPanelProps) {
+  const tech = card.technical_context;
+  const task = card.core_task_scope;
+  const io = card.inputs_outputs_contracts;
+  const arch = card.architectural_rules;
+  const edge = card.edge_cases_error_strategy;
+  const fmt = card.response_formatting;
+
   return (
     <aside className="panel side-panel">
       <h2>{title}</h2>
@@ -48,22 +70,43 @@ export function RequirementCardPanel({
           <p>{card.unresolved_fields.join(", ")}</p>
         </div>
       )}
-      <dl className="field-list">
-        <FieldBlock label="Objective" value={card.objective} />
-        <FieldBlock label="Background" value={card.context_background} />
-        <FieldBlock label="Audience" value={card.audience} />
-        <FieldBlock label="Persona / role" value={card.persona_role} />
-        <FieldBlock label="Output shape" value={card.desired_output_shape} />
-        <FieldBlock label="Tone / style" value={card.tone_style} />
-        <FieldBlock label="Verbosity" value={card.verbosity} />
-        <FieldBlock label="Language" value={card.language} />
-        <ListBlock label="Constraints" items={card.constraints} />
-        <ListBlock label="Success criteria" items={card.success_criteria} />
-        <ListBlock label="Forbidden" items={card.forbidden_content_actions} />
-        <ListBlock label="Edge cases" items={card.edge_cases} />
-        <ListBlock label="Input materials" items={card.input_materials} />
-        <ListBlock label="Example outputs" items={card.example_outputs} />
-      </dl>
+
+      <DimensionGroup heading="1. Technical Context">
+        <FieldBlock label="Environment" value={tech.environment} />
+        <ListBlock label="Integration points" items={tech.integration_points} />
+        <FieldBlock label="Dependency policy" value={tech.dependency_policy} />
+        <ListBlock label="Forbidden libraries" items={tech.forbidden_libraries} />
+      </DimensionGroup>
+
+      <DimensionGroup heading="2. Core Task & Scope">
+        <FieldBlock label="Task type" value={task.task_type} />
+        <FieldBlock label="Objective" value={task.objective} />
+        <ListBlock label="Out of scope" items={task.out_of_scope} />
+      </DimensionGroup>
+
+      <DimensionGroup heading="3. Inputs, Outputs & Contracts">
+        <FieldBlock label="Inputs" value={io.inputs} />
+        <FieldBlock label="Output contract" value={io.output_contract} />
+        <ListBlock label="Examples" items={io.examples} />
+      </DimensionGroup>
+
+      <DimensionGroup heading="4. Architectural Rules">
+        <ListBlock label="Design patterns" items={arch.design_patterns} />
+        <FieldBlock label="Coding style" value={arch.coding_style} />
+        <ListBlock label="Non-functional" items={arch.non_functional} />
+      </DimensionGroup>
+
+      <DimensionGroup heading="5. Edge Cases & Errors">
+        <FieldBlock label="Failure handling" value={edge.failure_handling} />
+        <ListBlock label="Bad inputs" items={edge.bad_inputs} />
+        <ListBlock label="Edge cases" items={edge.edge_cases} />
+      </DimensionGroup>
+
+      <DimensionGroup heading="6. Response Formatting">
+        <FieldBlock label="Explanation level" value={fmt.explanation_level} />
+        <FieldBlock label="Verbosity" value={fmt.verbosity} />
+        <ListBlock label="Extra artifacts" items={fmt.extra_artifacts} />
+      </DimensionGroup>
     </aside>
   );
 }

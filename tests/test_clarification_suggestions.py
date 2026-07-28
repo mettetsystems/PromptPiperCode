@@ -45,39 +45,41 @@ class StubLLMClient:
 def test_suggestion_service_returns_model_answers_when_llm_available() -> None:
     payload = json.dumps(
         {
-            "prompt": "Who should receive the weekly engineering summary?",
+            "prompt": "What is the precise stack for this coding prompt?",
             "suggested_answers": [
-                "engineering managers",
-                "VP of engineering",
-                "cross-functional product team",
+                "Python with FastAPI and Pydantic",
+                "TypeScript / React",
+                "stdlib only",
             ],
         }
     )
     service = ClarificationSuggestionService(
         StubLLMClient(payload),
     )
-    card = RequirementCard(objective="Summarize weekly engineering status")
+    card = RequirementCard(
+        core_task_scope={"objective": "Add FastAPI user create endpoint"}
+    )
 
     result = service.suggest(
-        initial_request="Summarize weekly engineering status for leadership",
+        initial_request="Add a FastAPI endpoint that creates users",
         card=card,
-        field_name="audience",
+        field_name="technical_context.environment",
     )
 
     assert result.model_available is True
-    assert result.field_name == "audience"
+    assert result.field_name == "technical_context.environment"
     assert len(result.suggested_answers) == 3
-    assert "engineering managers" in result.suggested_answers
+    assert "Python with FastAPI and Pydantic" in result.suggested_answers
 
 
 def test_suggestion_service_reports_unavailable_without_llm() -> None:
     service = ClarificationSuggestionService(None)
-    card = RequirementCard(objective="Draft a release note prompt")
+    card = RequirementCard(core_task_scope={"objective": "Draft a release note generator"})
 
     result = service.suggest(
-        initial_request="Draft a release note prompt",
+        initial_request="Draft a release note generator",
         card=card,
-        field_name="audience",
+        field_name="technical_context.environment",
     )
 
     assert result.model_available is False
@@ -89,7 +91,7 @@ def test_session_service_suggest_clarification_uses_pending_field() -> None:
     payload = json.dumps(
         {
             "prompt": "What output format fits best?",
-            "suggested_answers": ["bulleted summary", "markdown report"],
+            "suggested_answers": ["JSON schema", "markdown report"],
         }
     )
     service = SessionService(llm=StubLLMClient(payload))
@@ -121,7 +123,7 @@ def test_clarification_advances_without_model_query() -> None:
     session_id = created.record.session.id
     first_field = created.clarification_field
 
-    result = service.answer_clarification(session_id, "engineering team")
+    result = service.answer_clarification(session_id, "new feature logic")
 
     assert result.clarification_field != first_field
     assert result.record.session.state is SessionState.CLARIFYING

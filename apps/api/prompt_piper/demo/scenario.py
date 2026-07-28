@@ -11,11 +11,11 @@ def repo_root() -> Path:
     return Path(__file__).resolve().parents[4]
 
 
-DEFAULT_SCENARIO_PATH = repo_root() / "demo" / "implementation_report.yaml"
+DEFAULT_SCENARIO_PATH = repo_root() / "demo" / "coding_prompt.yaml"
 
 
 class DemoScenario(BaseModel):
-    title: str = "Implementation report prompt"
+    title: str = "FastAPI coding prompt"
     initial_request: str
     clarification_answers: list[str] = Field(min_length=2, max_length=2)
     edit_instructions: list[str] = Field(min_length=2, max_length=2)
@@ -43,7 +43,7 @@ class DemoRunResult:
     artifact_paths: list[Path]
 
     def print_summary(self) -> None:
-        print("Prompt Piper demo complete")
+        print("PromptPiperCode demo complete")
         print(f"  Session:   {self.session_id}")
         print(f"  Prompt ID: {self.prompt_id}")
         print(f"  Registry:  {self.registry_dir}")

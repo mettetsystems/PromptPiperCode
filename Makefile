@@ -8,7 +8,7 @@ PYTHON := $(VENV)/bin/python
 PIP := $(VENV)/bin/pip
 
 help:
-	@echo "Prompt Piper — common tasks"
+	@echo "PromptPiperCode — common tasks"
 	@echo ""
 	@echo "  make install       Install backend and frontend dependencies"
 	@echo "  make setup         Interactive wizard (CPU-only or local SLM)"
@@ -20,14 +20,14 @@ help:
 	@echo "  make dev           Run API and web dev servers (two terminals recommended)"
 	@echo "  make dev-api       Run FastAPI (auto-starts local SLM when GPU available)"
 	@echo "  make ensure-llm    Probe GPU and start llama-server, or fall back to CPU mode"
-	@echo "  make llama-down    Stop Prompt Piper-managed llama-server"
+	@echo "  make llama-down    Stop PromptPiperCode-managed llama-server"
 	@echo "  make dev-web       Run Vite dev server"
 	@echo "  make test          Run backend and integration tests"
 	@echo "  make eval          Run local pre-inference quality gate evals"
 	@echo "  make lint          Run ruff on backend"
 	@echo "  make typecheck     Run mypy on backend"
 	@echo "  make format        Format backend with ruff"
-	@echo "  make demo          Run the implementation-report local demo flow"
+	@echo "  make demo          Run the coding-prompt local demo flow"
 	@echo "  make podman-up     Start full Podman stack (postgres + api + web)"
 	@echo "  make podman-down   Stop Podman stack"
 	@echo "  make podman-logs   Follow Podman service logs"

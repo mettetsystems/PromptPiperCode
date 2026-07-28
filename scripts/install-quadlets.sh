@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Install Prompt Piper Quadlet units for rootless Podman (Fedora).
+# Install PromptPiperCode Quadlet units for rootless Podman (Fedora).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -11,7 +11,7 @@ usage() {
   cat <<EOF
 Usage: $(basename "$0") [--method compose|containers]
 
-Install Prompt Piper Quadlet units into:
+Install PromptPiperCode Quadlet units into:
   ${QUADLET_DEST}
 
 Methods:

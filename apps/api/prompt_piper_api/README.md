@@ -1,6 +1,8 @@
 # `prompt_piper_api` — HTTP API and core backend
 
-FastAPI application that implements the prompt design workflow: intake → clarify → edit → finalize → similarity → optimize → approve → export → complete (optional send-to-model).
+FastAPI application for **PromptPiperCode**: the local-first coding prompt workflow (intake → clarify → edit → finalize → similarity → optimize → approve → export → complete, with optional send-to-model).
+
+Intake fills a nested six-dimension `RequirementCard`. Drafts use six plain-text coding sections. Exports include rendered prompts plus `coding_prompt_spec.json` / `.yaml`.
 
 Post-optimization, **semantic precision** scoring and optional LLM refinement run during the optimization step; **send-to-model** runs after export from the Complete page or via `POST /sessions/{id}/send-to-inference`.
 
@@ -8,14 +10,14 @@ Post-optimization, **semantic precision** scoring and optional LLM refinement ru
 
 | Directory | README | Responsibility |
 |-----------|--------|----------------|
-| `domain/` | [domain/README.md](domain/README.md) | Pydantic models — sessions, drafts, requirement cards, optimization |
+| `domain/` | [domain/README.md](domain/README.md) | Pydantic models — sessions, drafts, coding RequirementCard, optimization |
 | `routes/` | [routes/README.md](routes/README.md) | REST route handlers (`/sessions`, `/registry`, `/health`) |
 | `schemas/` | [schemas/README.md](schemas/README.md) | Request/response DTOs and serializers |
 | `services/` | [services/README.md](services/README.md) | Business logic — `SessionService`, registry, similarity, export |
 | `llm/` | [llm/README.md](llm/README.md) | OpenAI-compatible client adapters and factory |
 | `db/` | [db/README.md](db/README.md) | SQLAlchemy models and DB session (Postgres/pgvector) |
 | `api/` | [api/README.md](api/README.md) | Global exception handlers |
-| `main.py` | — | FastAPI app factory and router mount |
+| `main.py` | — | FastAPI app factory (title: PromptPiperCode API) and router mount |
 
 ## Entry point
 
