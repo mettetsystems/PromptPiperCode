@@ -15,7 +15,7 @@ Local-only storage created at dev/runtime. **Do not commit session exports or re
 | `lexicon/` | Glossary overlay + generated precision vector index | `prompt_terms.yaml`, `LEXICON_VECTOR_INDEX_PATH` |
 | `test-export/` | Pytest temporary export roots | `conftest.py` monkeypatch |
 
-Production-style exports on Fedora often use `~/Documents/PromptPiper/` instead of `data/artifacts` — see root README. Each export folder may include `inference_response.txt` after **Send to model** on the Complete page.
+Production-style exports on Fedora often use `~/Documents/PromptPiperCode/` instead of `data/artifacts` — see root README. Each export folder may include `inference_response.txt` after **Send to model** on the Complete page.
 
 ```bash
 # Ensure session directory exists (git keeps .gitkeep only)

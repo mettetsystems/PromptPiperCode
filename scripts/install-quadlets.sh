@@ -50,9 +50,9 @@ if ! command -v podman >/dev/null 2>&1; then
 fi
 
 mkdir -p \
-  "${HOME}/Documents/PromptPiper/exports" \
-  "${HOME}/Documents/PromptPiper/registry" \
-  "${HOME}/Documents/PromptPiper/audit" \
+  "${HOME}/Documents/PromptPiperCode/exports" \
+  "${HOME}/Documents/PromptPiperCode/registry" \
+  "${HOME}/Documents/PromptPiperCode/audit" \
   "${ROOT}/data/postgres" \
   "${ROOT}/data/model-cache" \
   "${ROOT}/data/nltk_data" \

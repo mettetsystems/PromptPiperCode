@@ -56,11 +56,11 @@ class Settings(BaseSettings):
     )
 
     prompt_piper_export_root: Path = Field(
-        default_factory=lambda: Path.home() / "Documents" / "PromptPiper",
+        default_factory=lambda: Path.home() / "Documents" / "PromptPiperCode",
         alias="PROMPT_PIPER_EXPORT_ROOT",
     )
     prompt_piper_host_export_root: Path = Field(
-        default_factory=lambda: Path.home() / "Documents" / "PromptPiper",
+        default_factory=lambda: Path.home() / "Documents" / "PromptPiperCode",
         alias="PROMPT_PIPER_HOST_EXPORT_ROOT",
     )
     prompt_piper_registry_root: Path | None = Field(

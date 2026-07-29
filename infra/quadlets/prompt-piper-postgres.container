@@ -12,12 +12,12 @@ Image=docker.io/pgvector/pgvector:pg16
 ContainerName=prompt-piper-postgres
 Network=prompt-piper.network
 PublishPort=127.0.0.1:5432:5432
-EnvironmentFile=%h/PromptPiper/.env
+EnvironmentFile=%h/PromptPiperCode/.env
 Environment=POSTGRES_USER=prompt_piper
 Environment=POSTGRES_PASSWORD=prompt_piper
 Environment=POSTGRES_DB=prompt_piper
-Volume=%h/PromptPiper/data/postgres:/var/lib/postgresql/data:Z
-Volume=%h/PromptPiper/infra/init-db.sql:/docker-entrypoint-initdb.d/01-pgvector.sql:ro,Z
+Volume=%h/PromptPiperCode/data/postgres:/var/lib/postgresql/data:Z
+Volume=%h/PromptPiperCode/infra/init-db.sql:/docker-entrypoint-initdb.d/01-pgvector.sql:ro,Z
 HealthCmd=pg_isready -U prompt_piper -d prompt_piper
 HealthInterval=5s
 HealthTimeout=5s

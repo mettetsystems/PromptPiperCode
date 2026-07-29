@@ -34,7 +34,7 @@ Each top-level folder has a **README** describing its files and how they fit tog
 | [`docs/`](docs/README.md) | Architecture and workflow guides | design docs |
 | [`tests/`](tests/README.md) | pytest suite | backend tests |
 | [`demo/`](demo/README.md) | Demo scenario fixtures | `make demo` input |
-| `~/Documents/PromptPiper` | Host export root (registry, exports, audit) | production-style paths on Fedora |
+| `~/Documents/PromptPiperCode` | Host export root (registry, exports, audit) | production-style paths on Fedora |
 
 ## Quick start (native dev)
 
@@ -100,7 +100,7 @@ PromptPiperCode runs entirely through Podman containers. No Docker Desktop, Kube
 
 ```bash
 # Create host export directory for registry + artifacts
-mkdir -p ~/Documents/PromptPiper
+mkdir -p ~/Documents/PromptPiperCode
 
 # First-time environment (skip if .env already exists)
 cp .env.example .env
@@ -115,7 +115,7 @@ Then:
 2. Create a prompt session and walk through clarify → edit → finalize → similarity → optimize → approve → export → complete
 3. Use the workflow stepper to review earlier steps; re-open a step if you need to revise before completion
 4. Export artifacts from the session; on **Complete**, optionally **Send to model** to run the optimized prompt
-5. Confirm files appear under `~/Documents/PromptPiper/exports/` in a unique timestamped folder
+5. Confirm files appear under `~/Documents/PromptPiperCode/exports/` in a unique timestamped folder
 
 Or use the helper script (creates directories and starts the stack):
 
@@ -149,9 +149,9 @@ Stop and view logs:
 
 | Host path                         | Container path | Purpose                    |
 |-----------------------------------|----------------|----------------------------|
-| `~/Documents/PromptPiper`         | `/exports`     | Registry, exports, audit   |
-| `~/Documents/PromptPiper/exports` | `/exports/exports` | Unique artifact folders |
-| `~/Documents/PromptPiper/registry`| `/exports/registry` | Git-backed registry  |
+| `~/Documents/PromptPiperCode`         | `/exports`     | Registry, exports, audit   |
+| `~/Documents/PromptPiperCode/exports` | `/exports/exports` | Unique artifact folders |
+| `~/Documents/PromptPiperCode/registry`| `/exports/registry` | Git-backed registry  |
 | `data/model-cache`                | `/models`      | Embedding model cache      |
 | `data/postgres`                   | `/var/lib/postgresql/data` | PostgreSQL files |
 
@@ -175,7 +175,7 @@ See [infra/quadlets/README.md](infra/quadlets/README.md) for compose vs individu
 
 Each export creates a new folder:
 
-`~/Documents/PromptPiper/exports/YYYY-MM-DD_HH-MM-SS__{prompt_id}__{safe_slug}/`
+`~/Documents/PromptPiperCode/exports/YYYY-MM-DD_HH-MM-SS__{prompt_id}__{safe_slug}/`
 
 Existing folders are never overwritten; collisions append `__export_002`, `__export_003`, and so on.
 
@@ -185,8 +185,8 @@ Copy `.env.example` to `.env` at the repo root. For container-specific defaults 
 
 | Variable | Default (native) | Podman notes |
 |----------|------------------|--------------|
-| `PROMPT_PIPER_EXPORT_ROOT` | `~/Documents/PromptPiper` | `/exports` in API container |
-| `PROMPT_PIPER_HOST_EXPORT_ROOT` | `~/Documents/PromptPiper` | Host path recorded in manifests |
+| `PROMPT_PIPER_EXPORT_ROOT` | `~/Documents/PromptPiperCode` | `/exports` in API container |
+| `PROMPT_PIPER_HOST_EXPORT_ROOT` | `~/Documents/PromptPiperCode` | Host path recorded in manifests |
 | `PROMPT_PIPER_REGISTRY_ROOT` | `{export_root}/registry` | Git-backed prompt registry |
 | `PROMPT_PIPER_ARTIFACT_ROOT` | `{export_root}/exports` | Unique export folders |
 | `SESSIONS_PATH` | `./data/sessions` | JSON session store (survives API restart) |
@@ -284,7 +284,7 @@ Artifact export uses Markdown as canonical source with optional conversions:
 | HTML | Pandoc (fallback: built-in HTML) | `dnf install pandoc` | included |
 | PDF | WeasyPrint (fallback: Pandoc) | `pip install weasyprint` | included |
 
-Missing tools produce **warnings**, not crashes. Export folders are created under `~/Documents/PromptPiper/exports/` (or `PROMPT_PIPER_ARTIFACT_ROOT`); the built-in HTML fallback still produces a readable `optimized_prompt.html` when Pandoc is absent.
+Missing tools produce **warnings**, not crashes. Export folders are created under `~/Documents/PromptPiperCode/exports/` (or `PROMPT_PIPER_ARTIFACT_ROOT`); the built-in HTML fallback still produces a readable `optimized_prompt.html` when Pandoc is absent.
 
 ## Troubleshooting
 

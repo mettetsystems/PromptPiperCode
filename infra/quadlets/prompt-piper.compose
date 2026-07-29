@@ -6,13 +6,13 @@
 
 [Unit]
 Description=PromptPiperCode (Podman Compose stack)
-Documentation=file://%h/PromptPiper/infra/quadlets/README.md
+Documentation=file://%h/PromptPiperCode/infra/quadlets/README.md
 After=network-online.target
 Wants=network-online.target
 
 [Compose]
-File=%h/PromptPiper/infra/podman-compose.yml
-WorkingDirectory=%h/PromptPiper
+File=%h/PromptPiperCode/infra/podman-compose.yml
+WorkingDirectory=%h/PromptPiperCode
 
 [Service]
 Restart=always

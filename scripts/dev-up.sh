@@ -11,9 +11,9 @@ if ! command -v podman >/dev/null 2>&1; then
 fi
 
 mkdir -p \
-  "${HOME}/Documents/PromptPiper/exports" \
-  "${HOME}/Documents/PromptPiper/registry" \
-  "${HOME}/Documents/PromptPiper/audit" \
+  "${HOME}/Documents/PromptPiperCode/exports" \
+  "${HOME}/Documents/PromptPiperCode/registry" \
+  "${HOME}/Documents/PromptPiperCode/audit" \
   data/model-cache \
   data/postgres \
   data/nltk_data \
@@ -54,7 +54,7 @@ PromptPiperCode is running locally.
   API docs http://127.0.0.1:8000/docs
   Postgres localhost:5432 (user/db from .env)
 
-Exports:  ~/Documents/PromptPiper/exports
+Exports:  ~/Documents/PromptPiperCode/exports
 
 Logs:  ./scripts/dev-logs.sh
 Stop:  ./scripts/dev-down.sh

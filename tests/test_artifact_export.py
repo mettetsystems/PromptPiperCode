@@ -64,7 +64,7 @@ def test_export_folder_created_under_exports_exports(tmp_path: Path) -> None:
     export_service = ArtifactExportService(
         ArtifactService(artifact_root),
         export_root=export_root,
-        host_export_root=tmp_path / "Documents" / "PromptPiper",
+        host_export_root=tmp_path / "Documents" / "PromptPiperCode",
         artifact_root=artifact_root,
     )
     prompt_id = build_prompt_id("Weekly status", uuid4())
@@ -212,7 +212,7 @@ def test_no_artifact_written_outside_export_root(tmp_path: Path) -> None:
     export_service = ArtifactExportService(
         ArtifactService(artifact_root),
         export_root=export_root,
-        host_export_root=tmp_path / "Documents" / "PromptPiper",
+        host_export_root=tmp_path / "Documents" / "PromptPiperCode",
         artifact_root=artifact_root,
     )
     outside = tmp_path / "outside" / "escape.txt"
@@ -226,14 +226,14 @@ def test_export_root_defaults_to_exports_in_container(monkeypatch: pytest.Monkey
     monkeypatch.setenv("PROMPT_PIPER_EXPORT_ROOT", "/exports")
     monkeypatch.setenv(
         "PROMPT_PIPER_HOST_EXPORT_ROOT",
-        str(Path.home() / "Documents" / "PromptPiper"),
+        str(Path.home() / "Documents" / "PromptPiperCode"),
     )
     settings = Settings()
     assert settings.prompt_piper_export_root == Path("/exports")
     assert settings.artifacts_path == Path("/exports/exports")
 
 
-def test_host_export_root_defaults_to_documents_prompt_piper(
+def test_host_export_root_defaults_to_documents_prompt_piper_code(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     for key in (
@@ -245,7 +245,7 @@ def test_host_export_root_defaults_to_documents_prompt_piper(
     ):
         monkeypatch.delenv(key, raising=False)
     settings = Settings()
-    expected = Path.home() / "Documents" / "PromptPiper"
+    expected = Path.home() / "Documents" / "PromptPiperCode"
     assert settings.prompt_piper_host_export_root == expected
 
 
