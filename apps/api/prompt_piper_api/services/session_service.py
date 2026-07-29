@@ -17,6 +17,7 @@ from prompt_piper_api.domain.similarity import SimilarityCheckResult, Similarity
 from prompt_piper_api.llm.base import LLMClient
 from prompt_piper_api.services.artifact_export_service import ArtifactExportService
 from prompt_piper_api.services.audit_log_service import AuditLogService
+from prompt_piper_api.services.clarification_prompts import ClarificationVersionText
 from prompt_piper_api.services.clarification_question_ranker import (
     ClarificationQuestion,
     ClarificationQuestionRanker,
@@ -50,7 +51,6 @@ from prompt_piper_api.services.semantic_precision import (
 from prompt_piper_api.services.session_record import SessionRecord
 from prompt_piper_api.services.session_store import InMemorySessionStore, SessionStore
 from prompt_piper_api.services.user_settings_service import UserSettingsService, get_user_settings_service
-from prompt_piper_api.services.user_settings_service import UserSettingsService, get_user_settings_service
 from prompt_piper_api.services.similarity_check_service import SimilarityCheckService
 from prompt_piper_api.services.state_transitions import (
     ACTION_ANSWER,
@@ -80,6 +80,7 @@ class SessionActionResult(BaseModel):
     clarification_question_number: int | None = None
     clarification_total_questions: int | None = None
     clarification_quick_replies: list[str] | None = None
+    clarification_versions: list[ClarificationVersionText] | None = None
     clarification_can_finish: bool | None = None
     draft: PromptDraft | None = None
     revised_draft: PromptDraft | None = None
@@ -113,6 +114,7 @@ def _clarification_payload(
             "clarification_question_number": None,
             "clarification_total_questions": None,
             "clarification_quick_replies": None,
+            "clarification_versions": None,
             "clarification_can_finish": can_finish,
         }
     return {
@@ -121,6 +123,7 @@ def _clarification_payload(
         "clarification_question_number": question.question_number,
         "clarification_total_questions": question.total_questions,
         "clarification_quick_replies": question.quick_reply_options,
+        "clarification_versions": question.versions,
         "clarification_can_finish": can_finish,
     }
 

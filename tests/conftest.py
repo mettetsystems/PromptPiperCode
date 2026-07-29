@@ -20,10 +20,13 @@ def isolate_documents_export_paths(tmp_path: Path, monkeypatch: pytest.MonkeyPat
     monkeypatch.setenv("ARTIFACTS_PATH", str(export_root / "exports"))
     monkeypatch.setenv("AUDIT_LOG_PATH", str(export_root / "audit"))
     monkeypatch.setenv("SESSIONS_PATH", str(tmp_path / "sessions"))
+    monkeypatch.setenv("USER_SETTINGS_PATH", str(tmp_path / "user_settings.json"))
 
     from prompt_piper_api.config import get_settings
+    from prompt_piper_api.services.user_settings_service import clear_user_settings_cache
 
     get_settings.cache_clear()
+    clear_user_settings_cache()
 
     try:
         from prompt_piper_api.routes import sessions as sessions_routes
@@ -34,6 +37,7 @@ def isolate_documents_export_paths(tmp_path: Path, monkeypatch: pytest.MonkeyPat
 
     yield
     get_settings.cache_clear()
+    clear_user_settings_cache()
 
     try:
         from prompt_piper_api.routes import sessions as sessions_routes

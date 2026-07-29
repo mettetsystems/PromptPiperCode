@@ -57,6 +57,7 @@ class UserSettingsService:
                 "llm_enabled": patch.llm_enabled,
                 "precision_warning_threshold": patch.precision_warning_threshold,
                 "similarity_time_scope_index": patch.similarity_time_scope_index,
+                "clarification_versions": patch.clarification_versions,
                 "default_api_endpoint_id": patch.default_api_endpoint_id,
                 "api_endpoints": merged_endpoints,
                 "ai_tooling_api_override": merged_override,
@@ -128,4 +129,6 @@ def get_user_settings_service() -> UserSettingsService:
 
 
 def clear_user_settings_cache() -> None:
-    get_user_settings_service.cache_clear()
+    cache_clear = getattr(get_user_settings_service, "cache_clear", None)
+    if cache_clear is not None:
+        cache_clear()

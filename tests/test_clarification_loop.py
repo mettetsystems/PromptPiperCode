@@ -54,7 +54,14 @@ def test_question_includes_quick_choices(service: SessionService) -> None:
     assert result.clarification_quick_replies[-1] == "unspecified"
     for option in result.clarification_quick_replies[:-1]:
         assert option in result.clarification_question
-
+    assert result.clarification_versions is not None
+    assert len(result.clarification_versions) == 3
+    assert [item.level for item in result.clarification_versions] == [
+        "beginner",
+        "standard",
+        "advanced",
+    ]
+    assert result.clarification_versions[0].rationale
 
 def test_clarification_loop_reaches_draft_at_gate(client: TestClient) -> None:
     create = client.post("/sessions", json={"initial_request": "Draft a release note prompt"})

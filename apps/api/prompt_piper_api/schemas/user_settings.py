@@ -10,6 +10,7 @@ from prompt_piper_api.domain.user_settings import (
     MAX_API_ENDPOINT_SLOTS,
     AiToolingApiOverride,
     ApiEndpointConfig,
+    ClarificationVersionsAvailable,
     UserSettings,
 )
 
@@ -44,12 +45,19 @@ class AiToolingApiOverrideUpdate(BaseModel):
     api_key: str | None = None
 
 
+class ClarificationVersionsSettings(BaseModel):
+    beginner: bool = True
+    standard: bool = True
+    advanced: bool = True
+
+
 class UserSettingsResponse(BaseModel):
     llm_enabled: bool
     precision_warning_threshold: float = Field(ge=0.0, le=1.0)
     similarity_time_scope_index: int = Field(ge=0, le=5)
     similarity_time_scope_label: str
     similarity_time_scope_labels: list[str]
+    clarification_versions: ClarificationVersionsSettings
     default_api_endpoint_id: str | None
     api_endpoints: list[ApiEndpointResponse]
     max_api_endpoint_slots: int = MAX_API_ENDPOINT_SLOTS
@@ -70,6 +78,9 @@ class UserSettingsUpdateRequest(BaseModel):
     llm_enabled: bool
     precision_warning_threshold: float = Field(ge=0.0, le=1.0)
     similarity_time_scope_index: int = Field(ge=0, le=5)
+    clarification_versions: ClarificationVersionsSettings = Field(
+        default_factory=ClarificationVersionsSettings,
+    )
     default_api_endpoint_id: str | None = None
     api_endpoints: list[ApiEndpointUpdate] = Field(default_factory=list)
     ai_tooling_api_override: AiToolingApiOverrideUpdate = Field(
@@ -90,12 +101,18 @@ def to_user_settings_response(
 ) -> UserSettingsResponse:
     endpoints = _padded_endpoints(settings)
     override = settings.ai_tooling_api_override
+    versions = settings.clarification_versions
     return UserSettingsResponse(
         llm_enabled=settings.llm_enabled,
         precision_warning_threshold=settings.precision_warning_threshold,
         similarity_time_scope_index=settings.similarity_time_scope_index,
         similarity_time_scope_label=SIMILARITY_TIME_SCOPE_LABELS[settings.similarity_time_scope_index],
         similarity_time_scope_labels=list(SIMILARITY_TIME_SCOPE_LABELS),
+        clarification_versions=ClarificationVersionsSettings(
+            beginner=versions.beginner,
+            standard=versions.standard,
+            advanced=versions.advanced,
+        ),
         default_api_endpoint_id=settings.default_api_endpoint_id,
         api_endpoints=[
             ApiEndpointResponse(
@@ -128,6 +145,11 @@ def to_user_settings(update: UserSettingsUpdateRequest) -> UserSettings:
         llm_enabled=update.llm_enabled,
         precision_warning_threshold=update.precision_warning_threshold,
         similarity_time_scope_index=update.similarity_time_scope_index,
+        clarification_versions=ClarificationVersionsAvailable(
+            beginner=update.clarification_versions.beginner,
+            standard=update.clarification_versions.standard,
+            advanced=update.clarification_versions.advanced,
+        ),
         default_api_endpoint_id=update.default_api_endpoint_id,
         api_endpoints=[
             ApiEndpointConfig(

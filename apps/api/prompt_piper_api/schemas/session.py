@@ -17,6 +17,7 @@ from prompt_piper_api.domain.optimization import OptimizationResult
 from prompt_piper_api.domain.pre_inference_metrics import PreInferenceMetrics
 from prompt_piper_api.domain.requirement_card import RequirementCard
 from prompt_piper_api.domain.similarity import SimilarityMatch
+from prompt_piper_api.services.clarification_prompts import ClarificationVersionText
 from prompt_piper_api.services.clarification_question_ranker import ClarificationQuestionRanker
 from prompt_piper_api.services.session_record import SessionRecord
 from prompt_piper_api.services.session_service import SessionActionResult
@@ -77,6 +78,7 @@ class SessionDetailResponse(BaseModel):
     clarification_question_number: int | None = None
     clarification_total_questions: int | None = None
     clarification_quick_replies: list[str] | None = None
+    clarification_versions: list[ClarificationVersionText] | None = None
     clarification_can_finish: bool | None = None
     current_draft: PromptDraft | None = None
     revised_draft: PromptDraft | None = None
@@ -136,6 +138,7 @@ def _clarification_from_pending(record: SessionRecord) -> dict[str, object | Non
             "clarification_question_number": None,
             "clarification_total_questions": None,
             "clarification_quick_replies": None,
+            "clarification_versions": None,
             "clarification_can_finish": can_finish,
         }
     return {
@@ -144,6 +147,7 @@ def _clarification_from_pending(record: SessionRecord) -> dict[str, object | Non
         "clarification_question_number": pending.question_number,
         "clarification_total_questions": pending.total_questions,
         "clarification_quick_replies": pending.quick_reply_options,
+        "clarification_versions": pending.versions,
         "clarification_can_finish": can_finish,
     }
 
@@ -163,6 +167,9 @@ def to_session_response(result: SessionActionResult) -> SessionDetailResponse:
         or (pending.total_questions if pending else None),
         "clarification_quick_replies": result.clarification_quick_replies
         or (pending.quick_reply_options if pending else None),
+        "clarification_versions": result.clarification_versions
+        if result.clarification_versions is not None
+        else (pending.versions if pending else None),
         "clarification_can_finish": result.clarification_can_finish,
     }
     return SessionDetailResponse(

@@ -45,6 +45,46 @@ def test_user_settings_round_trip(tmp_path: Path) -> None:
     assert saved.api_endpoints[0].api_key == "sk-test"
     assert loaded.ai_tooling_api_override.chat_model == "qwen"
     assert loaded.ai_tooling_api_override.api_key == "tooling-key"
+    assert loaded.clarification_versions.beginner is True
+    assert loaded.clarification_versions.standard is True
+    assert loaded.clarification_versions.advanced is True
+
+
+def test_user_settings_clarification_versions_round_trip(tmp_path: Path) -> None:
+    from prompt_piper_api.domain.user_settings import ClarificationVersionsAvailable
+
+    service = UserSettingsService(tmp_path / "user_settings.json")
+    service.save(
+        UserSettings(
+            clarification_versions=ClarificationVersionsAvailable(
+                beginner=False,
+                standard=True,
+                advanced=False,
+            ),
+        ),
+    )
+    loaded = service.load()
+    assert loaded.clarification_versions.beginner is False
+    assert loaded.clarification_versions.standard is True
+    assert loaded.clarification_versions.advanced is False
+    service.update(
+        UserSettings(
+            llm_enabled=True,
+            precision_warning_threshold=0.75,
+            similarity_time_scope_index=5,
+            clarification_versions=ClarificationVersionsAvailable(
+                beginner=True,
+                standard=False,
+                advanced=True,
+            ),
+            default_api_endpoint_id=None,
+            api_endpoints=[],
+        ),
+    )
+    updated = service.load()
+    assert updated.clarification_versions.beginner is True
+    assert updated.clarification_versions.standard is False
+    assert updated.clarification_versions.advanced is True
 
 
 def test_user_settings_preserves_api_key_when_blank_in_update(tmp_path: Path) -> None:

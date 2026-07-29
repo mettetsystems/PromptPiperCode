@@ -596,6 +596,75 @@ textarea {
   margin-top: 0;
 }
 
+.clarification-versions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.clarification-versions-meta {
+  margin: 0 0 0.25rem;
+}
+
+.clarification-version {
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: var(--surface-muted);
+  overflow: hidden;
+}
+
+.clarification-version summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 0.65rem 0.85rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  user-select: none;
+}
+
+.clarification-version summary::-webkit-details-marker {
+  display: none;
+}
+
+.clarification-version summary::before {
+  content: "▸";
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.clarification-version[open] summary::before {
+  content: "▾";
+}
+
+.clarification-version-label {
+  letter-spacing: 0.01em;
+}
+
+.clarification-version-body {
+  padding: 0 0.85rem 0.85rem;
+  border-top: 1px solid var(--border);
+}
+
+.clarification-version-body .question-text {
+  margin-bottom: 0.5rem;
+}
+
+.clarification-rationale {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.clarification-rationale-label {
+  font-weight: 600;
+  color: var(--text);
+}
+
 .quick-replies {
   display: flex;
   flex-wrap: wrap;

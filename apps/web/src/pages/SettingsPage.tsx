@@ -20,6 +20,7 @@ function toUpdatePayload(
     llm_enabled: settings.llm_enabled,
     precision_warning_threshold: settings.precision_warning_threshold,
     similarity_time_scope_index: settings.similarity_time_scope_index,
+    clarification_versions: settings.clarification_versions,
     default_api_endpoint_id: settings.default_api_endpoint_id,
     ai_tooling_api_override: aiToolingKey
       ? { ...aiToolingOverride, api_key: aiToolingKey }
@@ -123,6 +124,61 @@ export function SettingsPage() {
             </p>
           )}
         </div>
+      </Panel>
+
+      <Panel title="Clarification question versions">
+        <p className="muted">
+          Choose which wording levels appear during clarification. Standard opens by default;
+          Beginner and Advanced stay collapsed until expanded.
+        </p>
+        <label className="field checkbox-field">
+          <input
+            type="checkbox"
+            checked={draft.clarification_versions.beginner}
+            onChange={(event) =>
+              setDraft({
+                ...draft,
+                clarification_versions: {
+                  ...draft.clarification_versions,
+                  beginner: event.target.checked,
+                },
+              })
+            }
+          />
+          <span>Beginner — plain language with why-it-matters explanations</span>
+        </label>
+        <label className="field checkbox-field">
+          <input
+            type="checkbox"
+            checked={draft.clarification_versions.standard}
+            onChange={(event) =>
+              setDraft({
+                ...draft,
+                clarification_versions: {
+                  ...draft.clarification_versions,
+                  standard: event.target.checked,
+                },
+              })
+            }
+          />
+          <span>Standard — developer-oriented wording (default open)</span>
+        </label>
+        <label className="field checkbox-field">
+          <input
+            type="checkbox"
+            checked={draft.clarification_versions.advanced}
+            onChange={(event) =>
+              setDraft({
+                ...draft,
+                clarification_versions: {
+                  ...draft.clarification_versions,
+                  advanced: event.target.checked,
+                },
+              })
+            }
+          />
+          <span>Advanced — compact, thorough wording for experts</span>
+        </label>
       </Panel>
 
       <Panel title="Semantic precision warning">

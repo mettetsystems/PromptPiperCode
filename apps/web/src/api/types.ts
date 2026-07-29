@@ -289,12 +289,26 @@ export interface AiToolingApiOverrideUpdate {
   api_key?: string | null;
 }
 
+export interface ClarificationVersionText {
+  level: "beginner" | "standard" | "advanced";
+  label: string;
+  prompt: string;
+  rationale: string | null;
+}
+
+export interface ClarificationVersionsSettings {
+  beginner: boolean;
+  standard: boolean;
+  advanced: boolean;
+}
+
 export interface UserSettingsResponse {
   llm_enabled: boolean;
   precision_warning_threshold: number;
   similarity_time_scope_index: number;
   similarity_time_scope_label: string;
   similarity_time_scope_labels: string[];
+  clarification_versions: ClarificationVersionsSettings;
   default_api_endpoint_id: string | null;
   api_endpoints: ApiEndpointSettings[];
   max_api_endpoint_slots: number;
@@ -315,6 +329,7 @@ export interface UserSettingsUpdateRequest {
   llm_enabled: boolean;
   precision_warning_threshold: number;
   similarity_time_scope_index: number;
+  clarification_versions: ClarificationVersionsSettings;
   default_api_endpoint_id: string | null;
   api_endpoints: ApiEndpointUpdate[];
   ai_tooling_api_override: AiToolingApiOverrideUpdate;
@@ -328,6 +343,7 @@ export interface SessionDetailResponse {
   clarification_question_number: number | null;
   clarification_total_questions: number | null;
   clarification_quick_replies: string[] | null;
+  clarification_versions: ClarificationVersionText[] | null;
   clarification_can_finish: boolean | null;
   current_draft: PromptDraft | null;
   revised_draft: PromptDraft | null;

@@ -23,6 +23,27 @@ SIMILARITY_TIME_SCOPE_HOURS: tuple[float | None, ...] = (
 MAX_API_ENDPOINT_SLOTS = 6
 
 
+class ClarificationVersionsAvailable(BaseModel):
+    """Which clarification wording levels appear in the UI. All on by default."""
+
+    beginner: bool = True
+    standard: bool = True
+    advanced: bool = True
+
+    def enabled_levels(self) -> list[str]:
+        levels: list[str] = []
+        if self.beginner:
+            levels.append("beginner")
+        if self.standard:
+            levels.append("standard")
+        if self.advanced:
+            levels.append("advanced")
+        if not levels:
+            # Always keep at least standard so clarification remains usable.
+            levels.append("standard")
+        return levels
+
+
 class ApiEndpointConfig(BaseModel):
     id: str
     label: str = ""
@@ -52,6 +73,9 @@ class UserSettings(BaseModel):
     llm_enabled: bool = True
     precision_warning_threshold: float = Field(default=0.75, ge=0.0, le=1.0)
     similarity_time_scope_index: int = Field(default=5, ge=0, le=5)
+    clarification_versions: ClarificationVersionsAvailable = Field(
+        default_factory=ClarificationVersionsAvailable,
+    )
     default_api_endpoint_id: str | None = None
     api_endpoints: list[ApiEndpointConfig] = Field(default_factory=list)
     ai_tooling_api_override: AiToolingApiOverride = Field(default_factory=AiToolingApiOverride)

@@ -1,11 +1,17 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { formatApiError } from "../api/http";
-import type { ClarificationSuggestionsResponse, SessionDetailResponse } from "../api/types";
+import type {
+  ClarificationSuggestionsResponse,
+  ClarificationVersionText,
+  ClarificationVersionsSettings,
+  SessionDetailResponse,
+} from "../api/types";
 import {
   useAnswerClarification,
   useCompleteClarification,
   useSuggestClarification,
+  useUserSettings,
 } from "../api/hooks";
 import { fetchLlmHealth } from "../api/sessions";
 import {
@@ -21,10 +27,85 @@ interface ClarificationPageProps {
   readOnly?: boolean;
 }
 
+const DEFAULT_VERSIONS: ClarificationVersionsSettings = {
+  beginner: true,
+  standard: true,
+  advanced: true,
+};
+
+function isVersionEnabled(
+  level: ClarificationVersionText["level"],
+  availability: ClarificationVersionsSettings,
+): boolean {
+  const enabled = availability[level];
+  if (availability.beginner || availability.standard || availability.advanced) {
+    return enabled;
+  }
+  return level === "standard";
+}
+
+function ClarificationVersionAccordions({
+  versions,
+  availability,
+  questionNumber,
+  totalQuestions,
+  questionKey,
+}: {
+  versions: ClarificationVersionText[];
+  availability: ClarificationVersionsSettings;
+  questionNumber: number;
+  totalQuestions: number;
+  questionKey: string;
+}) {
+  const visible = versions.filter((version) => isVersionEnabled(version.level, availability));
+  const [openLevels, setOpenLevels] = useState<Record<string, boolean>>({
+    beginner: false,
+    standard: true,
+    advanced: false,
+  });
+
+  useEffect(() => {
+    setOpenLevels({ beginner: false, standard: true, advanced: false });
+  }, [questionKey]);
+
+  return (
+    <div className="clarification-versions" role="group" aria-label="Question wording versions">
+      <p className="muted clarification-versions-meta">
+        Quick question {questionNumber} of {totalQuestions}
+      </p>
+      {visible.map((version) => (
+        <details
+          key={version.level}
+          className="clarification-version"
+          open={openLevels[version.level] ?? false}
+          onToggle={(event) => {
+            const isOpen = event.currentTarget.open;
+            setOpenLevels((current) => ({ ...current, [version.level]: isOpen }));
+          }}
+        >
+          <summary>
+            <span className="clarification-version-label">{version.label}</span>
+          </summary>
+          <div className="clarification-version-body">
+            <p className="question-text">{version.prompt}</p>
+            {version.rationale && (
+              <p className="clarification-rationale">
+                <span className="clarification-rationale-label">Why this matters: </span>
+                {version.rationale}
+              </p>
+            )}
+          </div>
+        </details>
+      ))}
+    </div>
+  );
+}
+
 export function ClarificationPage({ sessionId, session, readOnly = false }: ClarificationPageProps) {
   const answer = useAnswerClarification(sessionId);
   const complete = useCompleteClarification(sessionId);
   const suggest = useSuggestClarification(sessionId);
+  const userSettings = useUserSettings();
   const llmHealth = useQuery({
     queryKey: ["health", "llm"],
     queryFn: fetchLlmHealth,
@@ -51,6 +132,12 @@ export function ClarificationPage({ sessionId, session, readOnly = false }: Clar
   const combinedAnswer = buildClarificationAnswer(selectedOptions, customAnswer);
   const canSubmit = combinedAnswer !== null;
   const modelEnabled = llmHealth.data?.llm_enabled === true && llmHealth.data.status === "ok";
+  const availability = userSettings.data?.clarification_versions ?? DEFAULT_VERSIONS;
+  const versions = useMemo(
+    () => session.clarification_versions ?? [],
+    [session.clarification_versions],
+  );
+  const hasVersions = versions.length > 0;
 
   async function submitAnswer(value: string) {
     if (!value.trim()) {
@@ -89,7 +176,16 @@ export function ClarificationPage({ sessionId, session, readOnly = false }: Clar
       <div className="grid-workflow">
         <div className="workflow-main stack-form">
           <Panel>
-            {!readOnly && session.clarification_question && (
+            {!readOnly && hasVersions && (
+              <ClarificationVersionAccordions
+                versions={versions}
+                availability={availability}
+                questionNumber={questionNumber}
+                totalQuestions={totalQuestions}
+                questionKey={questionKey}
+              />
+            )}
+            {!readOnly && !hasVersions && session.clarification_question && (
               <p className="question-text">{session.clarification_question}</p>
             )}
             {modelSuggestions?.suggested_question && (

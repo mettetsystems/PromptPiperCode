@@ -5,6 +5,11 @@ from pydantic import BaseModel, Field, field_validator
 from prompt_piper_api.domain.limits import MAX_CLARIFICATION_QUESTIONS
 from prompt_piper_api.domain.requirement_card import LEAF_FIELD_NAMES, RequirementCard
 from prompt_piper_api.llm.base import LLMClient
+from prompt_piper_api.services.clarification_prompts import (
+    FOCUSED_PROMPTS,
+    ClarificationVersionText,
+    build_version_texts,
+)
 
 REQUIRED_CLARIFICATION_COUNT = MAX_CLARIFICATION_QUESTIONS
 
@@ -40,51 +45,6 @@ REFINEMENT_FIELD_PRIORITY: tuple[str, ...] = (
     "inputs_outputs_contracts.examples",
     "edge_cases_error_strategy.edge_cases",
 )
-
-FOCUSED_PROMPTS: dict[str, str] = {
-    "core_task_scope.objective": "what single coding job should this prompt accomplish?",
-    "core_task_scope.task_type": "is this writing a feature, refactoring, debugging, or generating tests?",
-    "core_task_scope.out_of_scope": "what should the model explicitly not try to solve or include?",
-    "technical_context.environment": (
-        "what is the precise stack (language version, framework, key dependencies)?"
-    ),
-    "technical_context.integration_points": (
-        "what existing functions, types, schemas, or names must the output match?"
-    ),
-    "technical_context.dependency_policy": (
-        "stdlib only, allow listed third-party packages, or open package use?"
-    ),
-    "technical_context.forbidden_libraries": "which libraries or packages are forbidden?",
-    "inputs_outputs_contracts.inputs": (
-        "what do the inputs look like (params, payloads, or sample structures)?"
-    ),
-    "inputs_outputs_contracts.output_contract": (
-        "what exact return structure is required (JSON schema, SQL, interface, object)?"
-    ),
-    "inputs_outputs_contracts.examples": "what example inputs or outputs should guide the model?",
-    "architectural_rules.design_patterns": (
-        "which design patterns should it follow (OOP, FP, repository, async/await)?"
-    ),
-    "architectural_rules.coding_style": "what coding style or design approach should it follow?",
-    "architectural_rules.non_functional": (
-        "any memory, complexity, thread-safety, or security requirements?"
-    ),
-    "edge_cases_error_strategy.failure_handling": (
-        "how should failures be handled (exceptions, null, log, retry)?"
-    ),
-    "edge_cases_error_strategy.bad_inputs": (
-        "what bad inputs will it face (null, empty lists, rate limits, wrong types)?"
-    ),
-    "edge_cases_error_strategy.edge_cases": "what edge cases or exceptions must be handled?",
-    "response_formatting.explanation_level": (
-        "code only, brief rationale, or step-by-step breakdown before the code?"
-    ),
-    "response_formatting.verbosity": "how long or detailed should the response be?",
-    "response_formatting.extra_artifacts": (
-        "should tests, comments, or other artifacts be appended?"
-    ),
-    "optimization_targets": "which optimization goals matter most right now?",
-}
 
 QUICK_REPLY_OPTIONS: dict[str, tuple[str, ...]] = {
     "core_task_scope.objective": (
@@ -242,12 +202,16 @@ class ClarificationQuestion(BaseModel):
     field_name: str
     question_number: int = Field(ge=1, description="Current quick question index.")
     total_questions: int = Field(default=MAX_CLARIFICATION_QUESTIONS, ge=1)
-    prompt: str = Field(description="Focused question without numbering prefix.")
+    prompt: str = Field(description="Standard focused question without numbering prefix.")
+    versions: list[ClarificationVersionText] = Field(
+        default_factory=list,
+        description="Beginner, standard, and advanced wording for this field.",
+    )
     quick_reply_options: list[str] = Field(
         min_length=4,
         description="Quick-reply choices including a final unspecified option.",
     )
-    question: str = Field(description="Full formatted question shown to the user.")
+    question: str = Field(description="Full formatted standard question (legacy display).")
     rank: int = Field(ge=1, description="Expected clarification value rank for this field.")
     allows_free_text: bool = Field(
         default=True,
@@ -336,6 +300,7 @@ class ClarificationQuestionRanker:
     ) -> ClarificationQuestion:
         del card, last_answer
         prompt = FOCUSED_PROMPTS[field_name]
+        versions = build_version_texts(field_name)
         quick_reply_options = list(QUICK_REPLY_OPTIONS[field_name])
         question = format_clarification_question(
             question_number=question_number,
@@ -348,6 +313,7 @@ class ClarificationQuestionRanker:
             question_number=question_number,
             total_questions=total_questions,
             prompt=prompt,
+            versions=versions,
             quick_reply_options=quick_reply_options,
             question=question,
             rank=rank or question_number,

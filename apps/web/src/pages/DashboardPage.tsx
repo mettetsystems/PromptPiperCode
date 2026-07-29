@@ -73,6 +73,7 @@ export function DashboardPage() {
                   llm_enabled: userSettings.data.llm_enabled,
                   precision_warning_threshold: userSettings.data.precision_warning_threshold,
                   similarity_time_scope_index: userSettings.data.similarity_time_scope_index,
+                  clarification_versions: userSettings.data.clarification_versions,
                   default_api_endpoint_id: value,
                   ai_tooling_api_override: {
                     label: userSettings.data.ai_tooling_api_override.label,
