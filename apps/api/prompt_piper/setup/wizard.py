@@ -23,7 +23,6 @@ from prompt_piper.setup.gpu_detect import detect_gpu, recommended_tier
 from prompt_piper.setup.lexicon_setup import lexicon_setup_command_lines
 from prompt_piper.setup.model_deps import (
     hf_cli_env_comments,
-    hf_cli_install_lines,
     hf_download_command,
 )
 
@@ -322,31 +321,35 @@ def _print_next_steps(write: PrintFn, result: SetupResult) -> None:
         return
 
     preset = ALL_PRESETS.get(result.preset_id or "")
-    write("Next steps:\n")
+    write("Next steps (run from the PromptPiperCode repo root):\n")
     if preset is not None:
-        write("  1. Install Hugging Face CLI (once, for official GGUF downloads):\n")
-        for line in hf_cli_install_lines(repo_root=repo_root())[1:]:
-            write(f"     {line}\n")
         if preset.requires_hf_license:
             write(
-                "     Accept the model license on Hugging Face, then run: hf auth login\n"
+                "  1. Accept the Gemma license on Hugging Face, then: hf auth login\n"
             )
-        write(f"  2. Download from official repo {preset.huggingface_gguf_repo}:\n")
-        write("     mkdir -p data/models\n")
+            write("  2. Download the GGUF (also offered automatically by make setup):\n")
+        else:
+            write("  1. Download the GGUF (also offered automatically by make setup):\n")
+        write("       make download-model\n")
         write(
-            f"     {hf_download_command(preset.huggingface_gguf_repo, preset.huggingface_gguf_file)}\n"
+            f"       # or: {hf_download_command(preset.huggingface_gguf_repo, preset.huggingface_gguf_file)}\n"
         )
-        write("  3. Start the API (auto-starts llama-server when a CUDA/ROCm GPU is present):\n")
-        write("     make dev-api\n")
-        write("     # Without a GPU, PromptPiperCode uses rule-based CPU mode automatically.\n")
-        write("  4. Or use Podman profile:\n")
-        write(f"     cp data/models/{preset.suggested_gguf_filename} data/models/model.gguf\n")
-        write("     podman compose -f infra/podman-compose.yml --profile llama up -d\n")
+        write(
+            "  2. Install llama.cpp so `llama-server` is on PATH "
+            "(or set LLAMA_SERVER=/path/to/llama-server).\n"
+        )
+        write("  3. Start the stack:\n")
+        write("       make ensure-llm   # GPU + GGUF + llama-server → starts local SLM\n")
+        write("       make dev-api      # terminal 1\n")
+        write("       make dev-web      # terminal 2\n")
+        write("  4. Or use Podman with a copied model.gguf:\n")
+        write(f"       cp data/models/{preset.suggested_gguf_filename} data/models/model.gguf\n")
+        write("       podman compose -f infra/podman-compose.yml --profile llama up -d\n")
     else:
         write("  1. Start your OpenAI-compatible server on the host.\n")
         write(f"  2. Confirm it serves model {result.chat_model!r} at {result.base_url}\n")
-    write("\n  Then: make dev-api  (or make podman-up)\n")
-    write("  Re-run wizard: make setup\n")
+        write("  3. make dev-api && make dev-web\n")
+    write("\n  Re-run wizard: make setup\n")
 
 
 def _choose(

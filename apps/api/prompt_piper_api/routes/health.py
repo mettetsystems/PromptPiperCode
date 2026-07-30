@@ -1,12 +1,30 @@
 from fastapi import APIRouter
 
 from prompt_piper_api import __version__
-from prompt_piper_api.config import get_settings
+from prompt_piper_api.config import Settings, get_settings
+from prompt_piper_api.domain.user_settings import UserSettings
 from prompt_piper_api.llm.factory import create_llm_client_from_env, load_local_chat_settings
 from prompt_piper_api.schemas.health import HealthResponse, LlmHealthResponse, utc_now
 from prompt_piper_api.services.user_settings_service import get_user_settings_service
 
 router = APIRouter(tags=["health"])
+
+
+def _disabled_llm_message(settings: Settings, prefs: UserSettings) -> str:
+    """Explain why the health probe reports LLM disabled."""
+    if not settings.prompt_piper_llm_enabled:
+        return (
+            "Local LLM is disabled in this API process (PROMPT_PIPER_LLM_ENABLED=false). "
+            "make dev-api runs ensure_llm, which turns the chat model off when no CUDA/ROCm "
+            "GPU is available or llama-server could not be started — even if .env still lists "
+            f"{settings.prompt_piper_local_chat_model}. "
+            "Fix: start the model server at "
+            f"{settings.prompt_piper_local_base_url} yourself, then restart make dev-api; "
+            "or install GPU drivers and restart so ensure_llm can launch llama-server."
+        )
+    if not prefs.llm_enabled:
+        return "AI assistance is turned off in Settings (Enable AI assistance)."
+    return "Local LLM disabled (CPU-only / rule-based mode)."
 
 
 @router.get("/health", response_model=HealthResponse)
@@ -26,14 +44,15 @@ def health_check() -> HealthResponse:
 def llm_health_check() -> LlmHealthResponse:
     settings = get_settings()
     user_settings = get_user_settings_service()
-    if not user_settings.is_llm_enabled():
+    prefs = user_settings.load()
+    if not user_settings.is_llm_enabled(settings):
         chat_settings = load_local_chat_settings(settings)
         return LlmHealthResponse(
             llm_enabled=False,
             status="disabled",
             endpoint=chat_settings.base_url,
             model_name=chat_settings.model_name,
-            message="Local LLM disabled (CPU-only / rule-based mode).",
+            message=_disabled_llm_message(settings, prefs),
             checked_at=utc_now(),
         )
 

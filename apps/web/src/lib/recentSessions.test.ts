@@ -58,6 +58,7 @@ const sampleSession = {
   clarification_question_number: null,
   clarification_total_questions: null,
   clarification_quick_replies: null,
+  clarification_quick_reply_guides: null,
   clarification_versions: null,
   current_draft: null,
   revised_draft: null,

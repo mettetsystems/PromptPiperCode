@@ -106,6 +106,56 @@ def create_llm_client_from_env() -> LLMClient | None:
     return create_llm_client()
 
 
+def create_ask_the_locals_client(
+    settings: Settings | None = None,
+) -> tuple[LLMClient | None, str]:
+    """Build the LLM client for Ask The Locals.
+
+    Prefers a dedicated Ask The Locals API override when configured (live, no restart).
+    Otherwise uses the current AI tooling model (setup wizard or tooling override).
+    """
+    from prompt_piper_api.services.user_settings_service import get_user_settings_service
+
+    app_settings = settings or get_settings()
+    user_settings = get_user_settings_service()
+    if not user_settings.is_llm_enabled(app_settings):
+        return None, "disabled"
+
+    locals_override = user_settings.load().ask_the_locals_api_override
+    if locals_override.configured:
+        temperature, max_tokens = profile_defaults(app_settings.prompt_piper_model_profile)
+        chat_settings = ModelSettings(
+            provider=ModelProvider.EXTERNAL_OPENAI_COMPATIBLE,
+            base_url=locals_override.base_url.strip(),
+            model_name=locals_override.chat_model.strip(),
+            api_key=locals_override.api_key,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            enabled=True,
+            profile=app_settings.prompt_piper_model_profile,
+        )
+        label = locals_override.label.strip() or locals_override.chat_model.strip()
+        return (
+            LocalOpenAICompatibleClient(
+                chat_settings,
+                embed_model_name=app_settings.prompt_piper_local_embed_model,
+            ),
+            f"Ask The Locals API ({label})",
+        )
+
+    client = create_llm_client(app_settings)
+    if client is None:
+        return None, "unavailable"
+    tooling = user_settings.load().ai_tooling_api_override
+    if tooling.configured:
+        label = tooling.label.strip() or tooling.chat_model.strip()
+        return client, f"Current AI tooling ({label})"
+    return (
+        client,
+        f"Current AI tooling ({app_settings.prompt_piper_local_chat_model})",
+    )
+
+
 @lru_cache
 def get_default_llm_client() -> LLMClient | None:
     return create_llm_client_from_env()

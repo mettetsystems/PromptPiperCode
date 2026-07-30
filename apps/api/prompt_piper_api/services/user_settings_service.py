@@ -11,6 +11,7 @@ from prompt_piper_api.domain.user_settings import (
     MAX_API_ENDPOINT_SLOTS,
     AiToolingApiOverride,
     ApiEndpointConfig,
+    AskTheLocalsApiOverride,
     UserSettings,
 )
 
@@ -52,6 +53,10 @@ class UserSettingsService:
             current.ai_tooling_api_override,
             patch.ai_tooling_api_override,
         )
+        merged_locals = self._merge_ask_the_locals_override(
+            current.ask_the_locals_api_override,
+            patch.ask_the_locals_api_override,
+        )
         merged = current.model_copy(
             update={
                 "llm_enabled": patch.llm_enabled,
@@ -61,6 +66,7 @@ class UserSettingsService:
                 "default_api_endpoint_id": patch.default_api_endpoint_id,
                 "api_endpoints": merged_endpoints,
                 "ai_tooling_api_override": merged_override,
+                "ask_the_locals_api_override": merged_locals,
             },
         )
         return self.save(merged)
@@ -88,6 +94,16 @@ class UserSettingsService:
         existing: AiToolingApiOverride,
         incoming: AiToolingApiOverride,
     ) -> AiToolingApiOverride:
+        api_key = incoming.api_key
+        if not api_key and existing.configured:
+            api_key = existing.api_key
+        return incoming.model_copy(update={"api_key": api_key})
+
+    @staticmethod
+    def _merge_ask_the_locals_override(
+        existing: AskTheLocalsApiOverride,
+        incoming: AskTheLocalsApiOverride,
+    ) -> AskTheLocalsApiOverride:
         api_key = incoming.api_key
         if not api_key and existing.configured:
             api_key = existing.api_key

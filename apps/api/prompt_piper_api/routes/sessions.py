@@ -13,6 +13,7 @@ from prompt_piper_api.schemas.precision import (
 )
 from prompt_piper_api.schemas.session import (
     AnswerClarificationRequest,
+    AskTheLocalsResponse,
     ClarificationSuggestionsResponse,
     CreateSessionFromTemplateRequest,
     CreateSessionRequest,
@@ -100,6 +101,15 @@ def suggest_clarification(
 ) -> ClarificationSuggestionsResponse:
     result = service.suggest_clarification(session_id)
     return ClarificationSuggestionsResponse.model_validate(result.model_dump())
+
+
+@router.post("/{session_id}/clarify/locals", response_model=AskTheLocalsResponse)
+def ask_the_locals(
+    session_id: UUID,
+    service: SessionService = Depends(get_session_service),
+) -> AskTheLocalsResponse:
+    result = service.ask_the_locals(session_id)
+    return AskTheLocalsResponse.model_validate(result.model_dump())
 
 
 @router.post("/{session_id}/answer", response_model=SessionDetailResponse)

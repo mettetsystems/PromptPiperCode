@@ -1,4 +1,4 @@
-.PHONY: help install install-api install-web setup setup-lexicon setup-lexicon-embed build-lexicon-index setup-lexicon-all setup-model-deps ensure-llm llama-down dev dev-api dev-web test lint typecheck format clean demo podman-up podman-down podman-logs podman-init-db
+.PHONY: help install install-api install-web setup setup-lexicon setup-lexicon-embed build-lexicon-index setup-lexicon-all setup-model-deps download-model ensure-llm llama-down dev dev-api dev-web test lint typecheck format clean demo podman-up podman-down podman-logs podman-init-db
 
 ROOT := $(CURDIR)
 API_DIR := $(ROOT)/apps/api
@@ -10,31 +10,39 @@ PIP := $(VENV)/bin/pip
 help:
 	@echo "PromptPiperCode — common tasks"
 	@echo ""
-	@echo "  make install       Install backend and frontend dependencies"
-	@echo "  make setup         Interactive wizard (CPU-only or local SLM)"
-	@echo "  make setup-lexicon Download WordNet data for CPU precision suggestions"
+	@echo "  make install           Install backend, frontend, and WordNet lexicon deps"
+	@echo "  make setup             Interactive wizard + optional GGUF download + lexicon"
+	@echo "  make setup-model-deps  Install hf (Hugging Face Hub CLI) into the API venv"
+	@echo "  make download-model    Download the GGUF named in .env into data/models/"
+	@echo "  make setup-lexicon     Download WordNet data for CPU precision suggestions"
 	@echo "  make setup-lexicon-embed Install sentence-transformers for vector index"
 	@echo "  make build-lexicon-index Build semantic precision vector index (CPU embed)"
 	@echo "  make setup-lexicon-all WordNet + embeddings + index (skips index if present)"
-	@echo "  make setup-model-deps  Install hf (Hugging Face Hub CLI) into the API venv"
-	@echo "  make dev           Run API and web dev servers (two terminals recommended)"
-	@echo "  make dev-api       Run FastAPI (auto-starts local SLM when GPU available)"
-	@echo "  make ensure-llm    Probe GPU and start llama-server, or fall back to CPU mode"
-	@echo "  make llama-down    Stop PromptPiperCode-managed llama-server"
-	@echo "  make dev-web       Run Vite dev server"
-	@echo "  make test          Run backend and integration tests"
-	@echo "  make eval          Run local pre-inference quality gate evals"
-	@echo "  make lint          Run ruff on backend"
-	@echo "  make typecheck     Run mypy on backend"
-	@echo "  make format        Format backend with ruff"
-	@echo "  make demo          Run the coding-prompt local demo flow"
-	@echo "  make podman-up     Start full Podman stack (postgres + api + web)"
-	@echo "  make podman-down   Stop Podman stack"
-	@echo "  make podman-logs   Follow Podman service logs"
-	@echo "  make podman-init-db  Ensure pgvector + app tables"
-	@echo "  make clean         Remove build artifacts and caches"
+	@echo "  make ensure-llm        Probe GPU and start llama-server, or fall back to CPU mode"
+	@echo "  make llama-down        Stop PromptPiperCode-managed llama-server"
+	@echo "  make dev               Reminders for running API + web (two terminals)"
+	@echo "  make dev-api           Run FastAPI (auto-starts local SLM when GPU available)"
+	@echo "  make dev-web           Run Vite dev server"
+	@echo "  make test              Run backend and integration tests"
+	@echo "  make eval              Run local pre-inference quality gate evals"
+	@echo "  make lint              Run ruff on backend"
+	@echo "  make typecheck         Run mypy on backend"
+	@echo "  make format            Format backend with ruff"
+	@echo "  make demo              Run the coding-prompt local demo flow"
+	@echo "  make podman-up         Start full Podman stack (postgres + api + web)"
+	@echo "  make podman-down       Stop Podman stack"
+	@echo "  make podman-logs       Follow Podman service logs"
+	@echo "  make podman-init-db    Ensure pgvector + app tables"
+	@echo "  make clean             Remove build artifacts and caches"
 
 install: install-api install-web setup-lexicon-embed setup-lexicon
+	@echo ""
+	@echo "Dependencies installed."
+	@echo "Next (from repo root):"
+	@echo "  make setup            # choose CPU-only or local SLM; offers GGUF download"
+	@echo "  make download-model   # if you skipped download during setup"
+	@echo "  make ensure-llm       # needs GPU + llama-server + GGUF in data/models/"
+	@echo "  make dev-api && make dev-web"
 
 setup:
 	$(ROOT)/scripts/setup.sh
@@ -53,6 +61,9 @@ setup-lexicon-all:
 
 setup-model-deps:
 	$(PIP) install -e "$(API_DIR)[setup]"
+
+download-model:
+	$(ROOT)/scripts/download-model.sh
 
 install-api:
 	cd $(API_DIR) && python3 -m venv .venv

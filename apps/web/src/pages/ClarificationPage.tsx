@@ -2,13 +2,16 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { formatApiError } from "../api/http";
 import type {
+  AskTheLocalsResponse,
   ClarificationSuggestionsResponse,
   ClarificationVersionText,
   ClarificationVersionsSettings,
+  QuickReplyGuide,
   SessionDetailResponse,
 } from "../api/types";
 import {
   useAnswerClarification,
+  useAskTheLocals,
   useCompleteClarification,
   useSuggestClarification,
   useUserSettings,
@@ -44,18 +47,43 @@ function isVersionEnabled(
   return level === "standard";
 }
 
+function BeginnerOptionGuides({ guides }: { guides: QuickReplyGuide[] }) {
+  if (guides.length === 0) {
+    return null;
+  }
+  return (
+    <div className="option-guides">
+      <p className="option-guides-title">What each default option means</p>
+      <ul className="option-guide-list">
+        {guides.map((guide) => (
+          <li key={guide.option} className="option-guide-item">
+            <p className="option-guide-option">{guide.option}</p>
+            <p className="option-guide-explanation">{guide.explanation}</p>
+            <p className="option-guide-when">
+              <span className="clarification-rationale-label">Best when: </span>
+              {guide.when_to_use}
+            </p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function ClarificationVersionAccordions({
   versions,
   availability,
   questionNumber,
   totalQuestions,
   questionKey,
+  optionGuides,
 }: {
   versions: ClarificationVersionText[];
   availability: ClarificationVersionsSettings;
   questionNumber: number;
   totalQuestions: number;
   questionKey: string;
+  optionGuides: QuickReplyGuide[];
 }) {
   const visible = versions.filter((version) => isVersionEnabled(version.level, availability));
   const [openLevels, setOpenLevels] = useState<Record<string, boolean>>({
@@ -94,6 +122,7 @@ function ClarificationVersionAccordions({
                 {version.rationale}
               </p>
             )}
+            {version.level === "beginner" && <BeginnerOptionGuides guides={optionGuides} />}
           </div>
         </details>
       ))}
@@ -105,6 +134,7 @@ export function ClarificationPage({ sessionId, session, readOnly = false }: Clar
   const answer = useAnswerClarification(sessionId);
   const complete = useCompleteClarification(sessionId);
   const suggest = useSuggestClarification(sessionId);
+  const locals = useAskTheLocals(sessionId);
   const userSettings = useUserSettings();
   const llmHealth = useQuery({
     queryKey: ["health", "llm"],
@@ -116,6 +146,7 @@ export function ClarificationPage({ sessionId, session, readOnly = false }: Clar
   const [modelSuggestions, setModelSuggestions] = useState<ClarificationSuggestionsResponse | null>(
     null,
   );
+  const [localsInsight, setLocalsInsight] = useState<AskTheLocalsResponse | null>(null);
 
   const questionKey = `${session.clarification_question_number ?? 0}:${session.clarification_field ?? ""}`;
 
@@ -123,19 +154,28 @@ export function ClarificationPage({ sessionId, session, readOnly = false }: Clar
     setSelectedOptions([]);
     setCustomAnswer("");
     setModelSuggestions(null);
+    setLocalsInsight(null);
   }, [questionKey]);
 
   const questionNumber = session.clarification_question_number ?? 1;
   const totalQuestions = session.clarification_total_questions ?? 15;
   const canFinish = session.clarification_can_finish ?? false;
-  const isBusy = answer.isPending || complete.isPending || suggest.isPending;
+  const isBusy =
+    answer.isPending || complete.isPending || suggest.isPending || locals.isPending;
   const combinedAnswer = buildClarificationAnswer(selectedOptions, customAnswer);
   const canSubmit = combinedAnswer !== null;
   const modelEnabled = llmHealth.data?.llm_enabled === true && llmHealth.data.status === "ok";
+  const localsOverrideActive = userSettings.data?.ask_the_locals_override_active === true;
+  const localsEnabled =
+    userSettings.data?.llm_enabled !== false && (localsOverrideActive || modelEnabled);
   const availability = userSettings.data?.clarification_versions ?? DEFAULT_VERSIONS;
   const versions = useMemo(
     () => session.clarification_versions ?? [],
     [session.clarification_versions],
+  );
+  const optionGuides = useMemo(
+    () => session.clarification_quick_reply_guides ?? [],
+    [session.clarification_quick_reply_guides],
   );
   const hasVersions = versions.length > 0;
 
@@ -146,6 +186,7 @@ export function ClarificationPage({ sessionId, session, readOnly = false }: Clar
     setSelectedOptions([]);
     setCustomAnswer("");
     setModelSuggestions(null);
+    setLocalsInsight(null);
     await answer.mutateAsync(value.trim());
   }
 
@@ -154,14 +195,21 @@ export function ClarificationPage({ sessionId, session, readOnly = false }: Clar
     setModelSuggestions(result);
   }
 
+  async function requestLocalsInsight() {
+    const result = await locals.mutateAsync();
+    setLocalsInsight(result);
+  }
+
   const errorMessage =
-    suggest.error != null
-      ? formatApiError(suggest.error, "Could not fetch model suggestions.")
-      : answer.error != null
-        ? formatApiError(answer.error, "Clarification action failed.")
-        : complete.error != null
-          ? formatApiError(complete.error, "Clarification action failed.")
-          : null;
+    locals.error != null
+      ? formatApiError(locals.error, "Ask The Locals failed.")
+      : suggest.error != null
+        ? formatApiError(suggest.error, "Could not fetch model suggestions.")
+        : answer.error != null
+          ? formatApiError(answer.error, "Clarification action failed.")
+          : complete.error != null
+            ? formatApiError(complete.error, "Clarification action failed.")
+            : null;
 
   return (
     <div className="page">
@@ -183,6 +231,7 @@ export function ClarificationPage({ sessionId, session, readOnly = false }: Clar
                 questionNumber={questionNumber}
                 totalQuestions={totalQuestions}
                 questionKey={questionKey}
+                optionGuides={optionGuides}
               />
             )}
             {!readOnly && !hasVersions && session.clarification_question && (
@@ -201,7 +250,7 @@ export function ClarificationPage({ sessionId, session, readOnly = false }: Clar
             <p className="muted">
               {readOnly
                 ? "Review the requirement card for answers captured during clarification."
-                : "Pick quick replies and/or add custom text, then submit. Optionally ask the model for tailored suggestions when you want help."}
+                : "Pick quick replies and/or add custom text, then submit. Expand Beginner for option guides, or Ask The Locals for model insight."}
             </p>
             {!readOnly && (
               <>
@@ -230,6 +279,21 @@ export function ClarificationPage({ sessionId, session, readOnly = false }: Clar
                   <button
                     type="button"
                     className="button secondary"
+                    disabled={isBusy || !localsEnabled}
+                    title={
+                      localsEnabled
+                        ? localsOverrideActive
+                          ? "Ask your configured Ask The Locals model for insight about this question"
+                          : "Ask the current AI tooling model for insight about this question"
+                        : "Configure AI tooling or an Ask The Locals API in Settings"
+                    }
+                    onClick={() => void requestLocalsInsight()}
+                  >
+                    {locals.isPending ? "Asking locals…" : "Ask The Locals"}
+                  </button>
+                  <button
+                    type="button"
+                    className="button secondary"
                     disabled={isBusy || !modelEnabled}
                     title={
                       modelEnabled
@@ -241,6 +305,20 @@ export function ClarificationPage({ sessionId, session, readOnly = false }: Clar
                     {suggest.isPending ? "Querying model…" : "Get model suggestions"}
                   </button>
                 </div>
+                {localsInsight && (
+                  <div className="locals-insight">
+                    <p className="muted">
+                      {localsInsight.message ??
+                        (localsInsight.model_available
+                          ? "Local insight"
+                          : "Ask The Locals unavailable.")}
+                      {localsInsight.model_source ? ` · ${localsInsight.model_source}` : ""}
+                    </p>
+                    {localsInsight.insight && (
+                      <p className="locals-insight-body">{localsInsight.insight}</p>
+                    )}
+                  </div>
+                )}
                 {modelSuggestions && (
                   <div className="model-suggestions">
                     <p className="muted">

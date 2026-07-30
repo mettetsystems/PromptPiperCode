@@ -296,10 +296,24 @@ export interface ClarificationVersionText {
   rationale: string | null;
 }
 
+export interface QuickReplyGuide {
+  option: string;
+  explanation: string;
+  when_to_use: string;
+}
+
 export interface ClarificationVersionsSettings {
   beginner: boolean;
   standard: boolean;
   advanced: boolean;
+}
+
+export interface AskTheLocalsResponse {
+  field_name: string;
+  insight: string;
+  model_available: boolean;
+  model_source: string | null;
+  message: string | null;
 }
 
 export interface UserSettingsResponse {
@@ -315,6 +329,8 @@ export interface UserSettingsResponse {
   setup_ai_tooling: SetupAiToolingInfo;
   ai_tooling_api_override: AiToolingApiOverrideSettings;
   ai_tooling_override_active: boolean;
+  ask_the_locals_api_override: AiToolingApiOverrideSettings;
+  ask_the_locals_override_active: boolean;
 }
 
 export interface ApiEndpointUpdate {
@@ -333,6 +349,7 @@ export interface UserSettingsUpdateRequest {
   default_api_endpoint_id: string | null;
   api_endpoints: ApiEndpointUpdate[];
   ai_tooling_api_override: AiToolingApiOverrideUpdate;
+  ask_the_locals_api_override: AiToolingApiOverrideUpdate;
 }
 
 export interface SessionDetailResponse {
@@ -343,6 +360,7 @@ export interface SessionDetailResponse {
   clarification_question_number: number | null;
   clarification_total_questions: number | null;
   clarification_quick_replies: string[] | null;
+  clarification_quick_reply_guides: QuickReplyGuide[] | null;
   clarification_versions: ClarificationVersionText[] | null;
   clarification_can_finish: boolean | null;
   current_draft: PromptDraft | null;

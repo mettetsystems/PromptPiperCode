@@ -26,6 +26,43 @@ if [[ "${setup_status}" -ne 0 ]]; then
   exit "${setup_status}"
 fi
 
+preset="$(
+  grep -E '^PROMPT_PIPER_LOCAL_MODEL_PRESET=' .env 2>/dev/null \
+    | tail -n1 \
+    | cut -d= -f2- \
+    | tr -d '"' \
+    | tr -d "'" \
+    || true
+)"
+llm_enabled="$(
+  grep -E '^PROMPT_PIPER_LLM_ENABLED=' .env 2>/dev/null \
+    | tail -n1 \
+    | cut -d= -f2- \
+    | tr -d '"' \
+    | tr -d "'" \
+    | tr '[:upper:]' '[:lower:]' \
+    || true
+)"
+
+if [[ "${preset}" != "cpu-only" && "${llm_enabled}" != "false" && -n "${preset}" && "${preset}" != "custom" ]]; then
+  echo ""
+  echo "Local SLM selected (${preset}). Preparing GGUF download tooling..."
+  "${VENV}/bin/pip" install -e "${API_DIR}[setup]" >/dev/null
+  download_now="y"
+  if [[ -t 0 ]]; then
+    read -r -p "Download the configured GGUF into data/models/ now? [Y/n] " download_now || download_now="y"
+  fi
+  if [[ -z "${download_now}" || "${download_now}" == "y" || "${download_now}" == "Y" ]]; then
+    "${ROOT}/scripts/download-model.sh" || {
+      echo "GGUF download did not finish. Fix the error above, then run: make download-model" >&2
+    }
+  else
+    echo "Skipped download. When ready: make download-model"
+  fi
+  echo ""
+  "${PYTHON}" -c "from prompt_piper.setup.download_model import llama_server_status_message; print(llama_server_status_message())"
+fi
+
 echo ""
 echo "Setting up precision lexicon (WordNet + embeddings)..."
 if [[ -f "${ROOT}/data/lexicon/precision_vectors.json" ]]; then
@@ -44,3 +81,9 @@ else
     echo "Run 'make build-lexicon-index' for semantic vector ranking."
   fi
 fi
+
+echo ""
+echo "Next: make download-model   # if you skipped the GGUF download"
+echo "      make ensure-llm       # verify GPU + start llama-server"
+echo "      make dev-api          # terminal 1"
+echo "      make dev-web          # terminal 2"

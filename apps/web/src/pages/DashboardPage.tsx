@@ -80,6 +80,11 @@ export function DashboardPage() {
                     base_url: userSettings.data.ai_tooling_api_override.base_url,
                     chat_model: userSettings.data.ai_tooling_api_override.chat_model,
                   },
+                  ask_the_locals_api_override: {
+                    label: userSettings.data.ask_the_locals_api_override.label,
+                    base_url: userSettings.data.ask_the_locals_api_override.base_url,
+                    chat_model: userSettings.data.ask_the_locals_api_override.chat_model,
+                  },
                   api_endpoints: userSettings.data.api_endpoints.map((endpoint) => ({
                     id: endpoint.id,
                     label: endpoint.label,
