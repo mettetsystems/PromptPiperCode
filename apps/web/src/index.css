@@ -591,6 +591,11 @@ textarea {
   border-color: var(--error-border);
 }
 
+.callout-ok {
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+}
+
 .question-text {
   font-size: 1.05rem;
   margin-top: 0;
@@ -663,6 +668,60 @@ textarea {
 .clarification-rationale-label {
   font-weight: 600;
   color: var(--text);
+}
+
+.option-guides {
+  margin-top: 0.85rem;
+}
+
+.option-guides-title {
+  margin: 0 0 0.5rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.option-guide-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.option-guide-item {
+  padding: 0.55rem 0.65rem;
+  border-left: 3px solid var(--accent);
+  background: var(--surface);
+  border-radius: 0 0.35rem 0.35rem 0;
+}
+
+.option-guide-option {
+  margin: 0 0 0.25rem;
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+.option-guide-explanation,
+.option-guide-when {
+  margin: 0.15rem 0 0;
+  font-size: 0.88rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.locals-insight {
+  margin: 0.5rem 0 1rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: var(--surface-muted);
+}
+
+.locals-insight-body {
+  margin: 0.35rem 0 0;
+  white-space: pre-wrap;
+  line-height: 1.5;
 }
 
 .quick-replies {

@@ -8,6 +8,7 @@ Configures local development: model paths, API URLs, CPU vs GPU mode. Writes rep
 | `catalog.py` | Known model presets (Gemma, Qwen, etc.) |
 | `env_writer.py` | Merge answers into `.env` without clobbering secrets |
 | `gpu_detect.py` | Detect NVIDIA GPU and VRAM for model sizing |
+| `download_model.py` | Download GGUF from `.env` (`make download-model`) |
 | `ensure_llm.py` | Entry for `make ensure-llm` / `dev-api.sh` — start or skip llama |
 | `llama_launcher.py` | Spawn and health-check `llama-server` subprocess |
 | `model_deps.py` | Optional Hugging Face download helpers |
@@ -18,12 +19,7 @@ Configures local development: model paths, API URLs, CPU vs GPU mode. Writes rep
 
 ```bash
 # From repo root
-make setup          # model wizard + lexicon setup
-make setup-lexicon-all   # WordNet + embeddings + vector index
-
-# Or directly
-apps/api/.venv/bin/python -m prompt_piper.setup
-apps/api/.venv/bin/python -m prompt_piper.setup.lexicon_setup
+make setup              # model wizard + optional GGUF download + lexicon
+make download-model     # re-fetch GGUF from .env into data/models/
+make setup-lexicon-all  # WordNet + embeddings + vector index
 ```
-
-After setup, `make dev-api` sources `ensure_llm` shell exports before starting uvicorn.

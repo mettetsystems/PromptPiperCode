@@ -17,6 +17,11 @@ from prompt_piper_api.domain.similarity import SimilarityCheckResult, Similarity
 from prompt_piper_api.llm.base import LLMClient
 from prompt_piper_api.services.artifact_export_service import ArtifactExportService
 from prompt_piper_api.services.audit_log_service import AuditLogService
+from prompt_piper_api.services.ask_the_locals_service import (
+    AskTheLocalsInsight,
+    AskTheLocalsService,
+)
+from prompt_piper_api.services.clarification_option_guides import QuickReplyGuide
 from prompt_piper_api.services.clarification_prompts import ClarificationVersionText
 from prompt_piper_api.services.clarification_question_ranker import (
     ClarificationQuestion,
@@ -80,6 +85,7 @@ class SessionActionResult(BaseModel):
     clarification_question_number: int | None = None
     clarification_total_questions: int | None = None
     clarification_quick_replies: list[str] | None = None
+    clarification_quick_reply_guides: list[QuickReplyGuide] | None = None
     clarification_versions: list[ClarificationVersionText] | None = None
     clarification_can_finish: bool | None = None
     draft: PromptDraft | None = None
@@ -114,6 +120,7 @@ def _clarification_payload(
             "clarification_question_number": None,
             "clarification_total_questions": None,
             "clarification_quick_replies": None,
+            "clarification_quick_reply_guides": None,
             "clarification_versions": None,
             "clarification_can_finish": can_finish,
         }
@@ -123,6 +130,7 @@ def _clarification_payload(
         "clarification_question_number": question.question_number,
         "clarification_total_questions": question.total_questions,
         "clarification_quick_replies": question.quick_reply_options,
+        "clarification_quick_reply_guides": question.quick_reply_guides,
         "clarification_versions": question.versions,
         "clarification_can_finish": can_finish,
     }
@@ -264,6 +272,35 @@ class SessionService:
             field_name=pending.field_name,
             last_answer=record.last_clarification_answer,
             asked_fields=record.asked_clarification_fields,
+        )
+
+    def ask_the_locals(self, session_id: UUID) -> AskTheLocalsInsight:
+        record = self.get_session(session_id)
+        session = record.session
+        pending = record.pending_clarification
+
+        require_state(
+            session.state,
+            ACTION_ANSWER,
+            "Ask The Locals is only available while clarifying.",
+        )
+        if pending is None:
+            raise StateTransitionError(
+                "No clarification question is pending for this session.",
+                current_state=session.state.value,
+                action=ACTION_ANSWER,
+            )
+
+        from prompt_piper_api.llm.factory import create_ask_the_locals_client
+
+        client, model_source = create_ask_the_locals_client()
+        return AskTheLocalsService(client).ask(
+            initial_request=record.initial_request,
+            card=session.requirement_card,
+            field_name=pending.field_name,
+            last_answer=record.last_clarification_answer,
+            asked_fields=record.asked_clarification_fields,
+            model_source=model_source,
         )
 
     def answer_clarification(self, session_id: UUID, answer: str) -> SessionActionResult:

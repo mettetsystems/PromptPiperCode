@@ -3,6 +3,7 @@ import {
   answerClarification,
   applyPrecisionReplacement,
   approveOptimization,
+  askTheLocals,
   completeClarification,
   createSession,
   createSessionFromTemplate,
@@ -112,6 +113,12 @@ export function useCompleteClarification(sessionId: string) {
 export function useSuggestClarification(sessionId: string) {
   return useMutation({
     mutationFn: () => suggestClarification(sessionId),
+  });
+}
+
+export function useAskTheLocals(sessionId: string) {
+  return useMutation({
+    mutationFn: () => askTheLocals(sessionId),
   });
 }
 

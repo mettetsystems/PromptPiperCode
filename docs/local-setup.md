@@ -11,12 +11,16 @@ PromptPiperCode local development and Podman deployment.
 
 ## Quick start
 
+Run these from the **PromptPiperCode repo root**:
+
 ```bash
 cp .env.example .env
 make install
-make setup      # optional: CPU-only or local SLM wizard
-make dev-api    # terminal 1
-make dev-web    # terminal 2
+make setup           # CPU-only or local SLM; offers GGUF download for SLM presets
+make download-model  # if you skipped download during setup
+make ensure-llm      # verify GPU + llama-server + GGUF
+make dev-api         # terminal 1
+make dev-web         # terminal 2
 ```
 
 - API: http://127.0.0.1:8000
@@ -36,7 +40,7 @@ Copy `.env.example` to `.env` at the repo root. Key variables:
 
 ### Local model wizard
 
-After `make install`, run the interactive setup wizard:
+After `make install`, run the interactive setup wizard from the repo root:
 
 ```bash
 make setup
@@ -58,6 +62,12 @@ The wizard detects GPU VRAM when available and groups presets:
 | Standard (~3–4B class) | ~8GB+ | Qwen3 4B, Gemma 3 4B, Gemma 3n E4B |
 | Prosumer (~8B+) | ~16GB+ (4090/5080/5090 class) | Qwen3 8B, Gemma 3 12B |
 
+When you pick a Gemma/Qwen preset, `make setup` also:
+
+1. Installs Hugging Face Hub CLI into the API venv (`make setup-model-deps`)
+2. Offers to download the configured GGUF into `data/models/` (same as `make download-model`)
+3. Checks whether `llama-server` is on `PATH`
+
 Non-interactive (CI/scripted):
 
 ```bash
@@ -71,25 +81,38 @@ Non-interactive (CI/scripted):
 # legacy aliases still work: qwen3-1.5b, qwen3-3b, gemma3-3b
 ```
 
-When you pick a Gemma 3 or Qwen3 preset, the wizard also writes Hugging Face CLI install
-commands into `.env` and prints them at the end of setup.
-
-Install the download CLI manually (or use the Make target):
+You can download (or re-download) later without re-running the wizard:
 
 ```bash
-make setup-model-deps
-# equivalent: apps/api/.venv/bin/pip install "huggingface_hub[cli]"
-hf auth login   # optional; gated models only
+make download-model
+# force refresh:
+./scripts/download-model.sh --force
 ```
 
-Then download the GGUF file the wizard printed, for example:
+Gated Gemma repos still need:
 
 ```bash
-mkdir -p data/models
-hf auth login   # required for official Google Gemma repos
-hf download google/gemma-3-1b-it-qat-q4_0-gguf \
-  gemma-3-1b-it-q4_0.gguf --local-dir data/models
+hf auth login
 ```
+
+### llama-server
+
+`make dev-api` / `make ensure-llm` auto-start a managed `llama-server` only when:
+
+- a CUDA/ROCm GPU is detected,
+- the GGUF exists under `data/models/`, and
+- `llama-server` is on `PATH` (or `LLAMA_SERVER` points to the binary).
+
+**Fedora (recommended):**
+
+```bash
+sudo dnf install llama-cpp
+# provides /usr/bin/llama-server
+command -v llama-server
+make ensure-llm
+```
+
+Other options: install [llama.cpp](https://github.com/ggerganov/llama.cpp) from source or a pre-built release, then ensure `llama-server` is on `PATH` (or set `LLAMA_SERVER=/path/to/llama-server`).
 
 ## PostgreSQL (optional)
 

@@ -15,3 +15,5 @@ def test_llm_health_disabled(monkeypatch) -> None:
     body = response.json()
     assert body["status"] == "disabled"
     assert body["llm_enabled"] is False
+    assert "PROMPT_PIPER_LLM_ENABLED=false" in body["message"]
+    assert "ensure_llm" in body["message"]

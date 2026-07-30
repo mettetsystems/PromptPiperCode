@@ -43,10 +43,6 @@ data/registry/*
 !data/registry/README.md
 data/postgres/*
 !data/postgres/.gitkeep
-data/model-cache/*
-!data/model-cache/.gitkeep
-data/models/*
-!data/models/.gitkeep
 data/demo/registry/*
 data/demo/artifacts/*
 data/demo/audit/*
@@ -59,6 +55,16 @@ data/user_settings.json
 data/*.db
 data/.llama-server.pid
 data/llama-server.log
+data/test-export/
+
+# Local AI / SLM weights and caches (never commit GGUFs or HF download caches)
+data/models/**
+!data/models/.gitkeep
+data/model-cache/**
+!data/model-cache/.gitkeep
+*.gguf
+*.gguf.partial
+**/.cache/huggingface/
 
 # Coverage
 .coverage

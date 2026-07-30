@@ -69,6 +69,19 @@ class AiToolingApiOverride(BaseModel):
         return bool(self.base_url.strip() and self.chat_model.strip())
 
 
+class AskTheLocalsApiOverride(BaseModel):
+    """Optional API used only by Ask The Locals (live; no API restart required)."""
+
+    label: str = ""
+    base_url: str = ""
+    chat_model: str = ""
+    api_key: str | None = None
+
+    @property
+    def configured(self) -> bool:
+        return bool(self.base_url.strip() and self.chat_model.strip())
+
+
 class UserSettings(BaseModel):
     llm_enabled: bool = True
     precision_warning_threshold: float = Field(default=0.75, ge=0.0, le=1.0)
@@ -79,6 +92,9 @@ class UserSettings(BaseModel):
     default_api_endpoint_id: str | None = None
     api_endpoints: list[ApiEndpointConfig] = Field(default_factory=list)
     ai_tooling_api_override: AiToolingApiOverride = Field(default_factory=AiToolingApiOverride)
+    ask_the_locals_api_override: AskTheLocalsApiOverride = Field(
+        default_factory=AskTheLocalsApiOverride,
+    )
 
     def normalized_endpoints(self) -> list[ApiEndpointConfig]:
         return self.api_endpoints[:MAX_API_ENDPOINT_SLOTS]

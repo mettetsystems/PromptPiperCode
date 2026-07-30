@@ -3,6 +3,10 @@ from __future__ import annotations
 from fastapi.testclient import TestClient
 
 from prompt_piper_api.domain.user_settings import ClarificationVersionsAvailable
+from prompt_piper_api.services.clarification_option_guides import (
+    assert_guides_cover_all_options,
+    build_quick_reply_guides,
+)
 from prompt_piper_api.services.clarification_prompts import (
     ADVANCED_PROMPTS,
     BEGINNER_PROMPTS,
@@ -11,6 +15,8 @@ from prompt_piper_api.services.clarification_prompts import (
     build_version_texts,
 )
 from prompt_piper_api.services.clarification_question_ranker import ClarificationQuestionRanker
+from prompt_piper_api.services.ask_the_locals_service import AskTheLocalsService
+from prompt_piper_api.domain.requirement_card import RequirementCard
 
 
 def test_prompt_maps_cover_same_fields() -> None:
@@ -54,6 +60,41 @@ def test_clarification_versions_available_defaults_and_fallback() -> None:
     assert none_enabled.enabled_levels() == ["standard"]
 
 
+def test_beginner_option_guides_cover_every_quick_reply() -> None:
+    assert_guides_cover_all_options()
+    guides = build_quick_reply_guides("technical_context.environment")
+    assert len(guides) == 5
+    assert guides[0].option == "Python 3.12 with FastAPI and Pydantic v2"
+    assert "stack" in guides[0].when_to_use.lower() or "project" in guides[0].when_to_use.lower()
+
+
+def test_ask_the_locals_falls_back_without_model() -> None:
+    result = AskTheLocalsService(llm=None).ask(
+        initial_request="Write a FastAPI signup endpoint",
+        card=RequirementCard(),
+        field_name="technical_context.environment",
+    )
+    assert result.model_available is False
+    assert result.insight == ""
+    assert result.message is not None
+    assert "unavailable" in result.message.lower()
+
+
+def test_ask_the_locals_api_route(client: TestClient) -> None:
+    create = client.post(
+        "/sessions",
+        json={"initial_request": "Write a FastAPI endpoint for user signup"},
+    )
+    assert create.status_code == 201
+    session_id = create.json()["session"]["id"]
+    response = client.post(f"/sessions/{session_id}/clarify/locals")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["field_name"]
+    assert payload["model_available"] is False
+    assert "unavailable" in (payload["message"] or "").lower()
+
+
 def test_session_api_returns_clarification_versions(client: TestClient) -> None:
     create = client.post(
         "/sessions",
@@ -77,6 +118,7 @@ def test_user_settings_api_clarification_versions(client: TestClient) -> None:
         "standard": True,
         "advanced": True,
     }
+    assert body["ask_the_locals_api_override"]["configured"] is False
     update = {
         "llm_enabled": body["llm_enabled"],
         "precision_warning_threshold": body["precision_warning_threshold"],
@@ -101,6 +143,11 @@ def test_user_settings_api_clarification_versions(client: TestClient) -> None:
             "base_url": body["ai_tooling_api_override"]["base_url"],
             "chat_model": body["ai_tooling_api_override"]["chat_model"],
         },
+        "ask_the_locals_api_override": {
+            "label": "Locals",
+            "base_url": "https://locals.example/v1",
+            "chat_model": "locals-model",
+        },
     }
     saved = client.put("/settings/user", json=update)
     assert saved.status_code == 200
@@ -109,3 +156,5 @@ def test_user_settings_api_clarification_versions(client: TestClient) -> None:
         "standard": False,
         "advanced": True,
     }
+    assert saved.json()["ask_the_locals_override_active"] is True
+    assert saved.json()["ask_the_locals_api_override"]["chat_model"] == "locals-model"

@@ -5,6 +5,10 @@ from pydantic import BaseModel, Field, field_validator
 from prompt_piper_api.domain.limits import MAX_CLARIFICATION_QUESTIONS
 from prompt_piper_api.domain.requirement_card import LEAF_FIELD_NAMES, RequirementCard
 from prompt_piper_api.llm.base import LLMClient
+from prompt_piper_api.services.clarification_option_guides import (
+    QuickReplyGuide,
+    build_quick_reply_guides,
+)
 from prompt_piper_api.services.clarification_prompts import (
     FOCUSED_PROMPTS,
     ClarificationVersionText,
@@ -211,6 +215,10 @@ class ClarificationQuestion(BaseModel):
         min_length=4,
         description="Quick-reply choices including a final unspecified option.",
     )
+    quick_reply_guides: list[QuickReplyGuide] = Field(
+        default_factory=list,
+        description="Beginner explanations for each default quick-reply option.",
+    )
     question: str = Field(description="Full formatted standard question (legacy display).")
     rank: int = Field(ge=1, description="Expected clarification value rank for this field.")
     allows_free_text: bool = Field(
@@ -302,6 +310,7 @@ class ClarificationQuestionRanker:
         prompt = FOCUSED_PROMPTS[field_name]
         versions = build_version_texts(field_name)
         quick_reply_options = list(QUICK_REPLY_OPTIONS[field_name])
+        quick_reply_guides = build_quick_reply_guides(field_name)
         question = format_clarification_question(
             question_number=question_number,
             total_questions=total_questions,
@@ -315,6 +324,7 @@ class ClarificationQuestionRanker:
             prompt=prompt,
             versions=versions,
             quick_reply_options=quick_reply_options,
+            quick_reply_guides=quick_reply_guides,
             question=question,
             rank=rank or question_number,
         )

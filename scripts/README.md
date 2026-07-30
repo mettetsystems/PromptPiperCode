@@ -4,7 +4,8 @@ Bash helpers invoked by `Makefile` targets. Run from repo root unless noted.
 
 | Script | Make target | Purpose |
 |--------|-------------|---------|
-| `setup.sh` | `make setup` | Run `prompt_piper.setup` wizard |
+| `setup.sh` | `make setup` | Wizard + optional GGUF download + lexicon |
+| `download-model.sh` | `make download-model` | Download GGUF from `.env` into `data/models/` |
 | `dev-api.sh` | `make dev-api` | `ensure_llm` + uvicorn with reload on API dirs only |
 | `ensure-llm.sh` | `make ensure-llm` | GPU probe and llama-server start |
 | `dev-up.sh` | `make podman-up` | Create export dirs, `podman compose up` |

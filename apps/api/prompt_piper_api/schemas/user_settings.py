@@ -10,6 +10,7 @@ from prompt_piper_api.domain.user_settings import (
     MAX_API_ENDPOINT_SLOTS,
     AiToolingApiOverride,
     ApiEndpointConfig,
+    AskTheLocalsApiOverride,
     ClarificationVersionsAvailable,
     UserSettings,
 )
@@ -45,6 +46,21 @@ class AiToolingApiOverrideUpdate(BaseModel):
     api_key: str | None = None
 
 
+class AskTheLocalsApiOverrideResponse(BaseModel):
+    label: str
+    base_url: str
+    chat_model: str
+    api_key_configured: bool
+    configured: bool
+
+
+class AskTheLocalsApiOverrideUpdate(BaseModel):
+    label: str = ""
+    base_url: str = ""
+    chat_model: str = ""
+    api_key: str | None = None
+
+
 class ClarificationVersionsSettings(BaseModel):
     beginner: bool = True
     standard: bool = True
@@ -64,6 +80,8 @@ class UserSettingsResponse(BaseModel):
     setup_ai_tooling: SetupAiToolingResponse
     ai_tooling_api_override: AiToolingApiOverrideResponse
     ai_tooling_override_active: bool
+    ask_the_locals_api_override: AskTheLocalsApiOverrideResponse
+    ask_the_locals_override_active: bool
 
 
 class ApiEndpointUpdate(BaseModel):
@@ -86,6 +104,9 @@ class UserSettingsUpdateRequest(BaseModel):
     ai_tooling_api_override: AiToolingApiOverrideUpdate = Field(
         default_factory=AiToolingApiOverrideUpdate,
     )
+    ask_the_locals_api_override: AskTheLocalsApiOverrideUpdate = Field(
+        default_factory=AskTheLocalsApiOverrideUpdate,
+    )
 
 
 def _padded_endpoints(settings: UserSettings) -> list[ApiEndpointConfig]:
@@ -101,6 +122,7 @@ def to_user_settings_response(
 ) -> UserSettingsResponse:
     endpoints = _padded_endpoints(settings)
     override = settings.ai_tooling_api_override
+    locals_override = settings.ask_the_locals_api_override
     versions = settings.clarification_versions
     return UserSettingsResponse(
         llm_enabled=settings.llm_enabled,
@@ -137,6 +159,14 @@ def to_user_settings_response(
             configured=override.configured,
         ),
         ai_tooling_override_active=override.configured,
+        ask_the_locals_api_override=AskTheLocalsApiOverrideResponse(
+            label=locals_override.label,
+            base_url=locals_override.base_url,
+            chat_model=locals_override.chat_model,
+            api_key_configured=bool(locals_override.api_key),
+            configured=locals_override.configured,
+        ),
+        ask_the_locals_override_active=locals_override.configured,
     )
 
 
@@ -166,5 +196,11 @@ def to_user_settings(update: UserSettingsUpdateRequest) -> UserSettings:
             base_url=update.ai_tooling_api_override.base_url,
             chat_model=update.ai_tooling_api_override.chat_model,
             api_key=update.ai_tooling_api_override.api_key,
+        ),
+        ask_the_locals_api_override=AskTheLocalsApiOverride(
+            label=update.ask_the_locals_api_override.label,
+            base_url=update.ask_the_locals_api_override.base_url,
+            chat_model=update.ask_the_locals_api_override.chat_model,
+            api_key=update.ask_the_locals_api_override.api_key,
         ),
     )

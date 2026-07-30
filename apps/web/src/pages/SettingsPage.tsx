@@ -1,14 +1,17 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import type { LlmHealthResponse } from "@prompt-piper/shared";
 import { formatApiError } from "../api/http";
 import type { ApiEndpointUpdate, UserSettingsResponse } from "../api/types";
 import { useUpdateUserSettings, useUserSettings } from "../api/hooks";
-import { ErrorBanner, LoadingState, PageHeader, Panel } from "../components/ui";
+import { fetchLlmHealth } from "../api/sessions";
+import { ErrorBanner, LoadingState, PageHeader, Panel, WarningBanner } from "../components/ui";
 
 function toUpdatePayload(
   settings: UserSettingsResponse,
   apiKeyDrafts: string[],
   aiToolingApiKeyDraft: string,
+  askTheLocalsApiKeyDraft: string,
 ) {
   const aiToolingOverride = {
     label: settings.ai_tooling_api_override.label,
@@ -16,6 +19,12 @@ function toUpdatePayload(
     chat_model: settings.ai_tooling_api_override.chat_model,
   };
   const aiToolingKey = aiToolingApiKeyDraft.trim();
+  const localsOverride = {
+    label: settings.ask_the_locals_api_override.label,
+    base_url: settings.ask_the_locals_api_override.base_url,
+    chat_model: settings.ask_the_locals_api_override.chat_model,
+  };
+  const localsKey = askTheLocalsApiKeyDraft.trim();
   return {
     llm_enabled: settings.llm_enabled,
     precision_warning_threshold: settings.precision_warning_threshold,
@@ -25,6 +34,9 @@ function toUpdatePayload(
     ai_tooling_api_override: aiToolingKey
       ? { ...aiToolingOverride, api_key: aiToolingKey }
       : aiToolingOverride,
+    ask_the_locals_api_override: localsKey
+      ? { ...localsOverride, api_key: localsKey }
+      : localsOverride,
     api_endpoints: settings.api_endpoints.map((endpoint, index) => {
       const update: ApiEndpointUpdate = {
         id: endpoint.id,
@@ -47,12 +59,19 @@ export function SettingsPage() {
   const [draft, setDraft] = useState<UserSettingsResponse | null>(null);
   const [apiKeyDrafts, setApiKeyDrafts] = useState<string[]>(Array(6).fill(""));
   const [aiToolingApiKeyDraft, setAiToolingApiKeyDraft] = useState("");
+  const [askTheLocalsApiKeyDraft, setAskTheLocalsApiKeyDraft] = useState("");
+  const [toolingTestPending, setToolingTestPending] = useState(false);
+  const [toolingTestResult, setToolingTestResult] = useState<LlmHealthResponse | null>(null);
+  const [toolingTestError, setToolingTestError] = useState<string | null>(null);
 
   useEffect(() => {
     if (settingsQuery.data) {
       setDraft(settingsQuery.data);
       setApiKeyDrafts(Array(settingsQuery.data.max_api_endpoint_slots).fill(""));
       setAiToolingApiKeyDraft("");
+      setAskTheLocalsApiKeyDraft("");
+      setToolingTestResult(null);
+      setToolingTestError(null);
     }
   }, [settingsQuery.data]);
 
@@ -83,6 +102,20 @@ export function SettingsPage() {
       );
       return { ...current, api_endpoints: endpoints };
     });
+  }
+
+  async function testCurrentAiTooling() {
+    setToolingTestPending(true);
+    setToolingTestError(null);
+    setToolingTestResult(null);
+    try {
+      const result = await fetchLlmHealth();
+      setToolingTestResult(result);
+    } catch (error) {
+      setToolingTestError(formatApiError(error, "Could not reach the AI tooling health check."));
+    } finally {
+      setToolingTestPending(false);
+    }
   }
 
   return (
@@ -121,8 +154,68 @@ export function SettingsPage() {
           {draft.ai_tooling_override_active && (
             <p className="muted">
               A saved override is configured and will replace this model after you restart the API.
+              The test below probes the connection the API is using right now.
             </p>
           )}
+          <p className="muted">
+            Test connection probes the live API process. If make dev-api could not start
+            llama-server (often no CUDA/ROCm GPU), it disables the chat model even when this
+            panel still shows the configured model name.
+          </p>
+          <div className="button-row">
+            <button
+              type="button"
+              className="button secondary"
+              disabled={toolingTestPending || !draft.llm_enabled}
+              title={
+                draft.llm_enabled
+                  ? "Probe the active AI tooling model endpoint"
+                  : "Enable AI assistance to test the model connection"
+              }
+              onClick={() => void testCurrentAiTooling()}
+            >
+              {toolingTestPending ? "Testing…" : "Test connection"}
+            </button>
+          </div>
+          {toolingTestError && <ErrorBanner message={toolingTestError} />}
+          {toolingTestResult?.status === "ok" && (
+            <div className="callout callout-ok" role="status">
+              Connected to <code>{toolingTestResult.model_name}</code>
+              {toolingTestResult.endpoint ? (
+                <>
+                  {" "}
+                  at <code>{toolingTestResult.endpoint}</code>
+                </>
+              ) : null}
+              {toolingTestResult.message ? ` — ${toolingTestResult.message}` : ""}
+            </div>
+          )}
+          {toolingTestResult && toolingTestResult.status === "disabled" && (
+            <WarningBanner
+              message={
+                toolingTestResult.message ||
+                "AI tooling is disabled. Enable AI assistance to use the model."
+              }
+            />
+          )}
+          {toolingTestResult && toolingTestResult.status === "unreachable" && (
+            <ErrorBanner
+              message={
+                toolingTestResult.message ||
+                `Could not reach ${toolingTestResult.model_name ?? "the model"} at ${
+                  toolingTestResult.endpoint ?? "the configured endpoint"
+                }.`
+              }
+            />
+          )}
+          {toolingTestResult &&
+            toolingTestResult.status !== "ok" &&
+            toolingTestResult.status !== "disabled" &&
+            toolingTestResult.status !== "unreachable" && (
+              <WarningBanner
+                message={`${toolingTestResult.status}: ${toolingTestResult.message}`}
+              />
+            )}
         </div>
       </Panel>
 
@@ -349,6 +442,78 @@ export function SettingsPage() {
         </label>
       </Panel>
 
+      <Panel title="Ask The Locals API">
+        <p className="muted">
+          Optional OpenAI-compatible API used only by the Ask The Locals button during
+          clarification. When blank, Ask The Locals uses the current AI tooling model. Takes effect
+          immediately (no API restart).
+        </p>
+        <label className="field">
+          <span>Label</span>
+          <input
+            type="text"
+            value={draft.ask_the_locals_api_override.label}
+            onChange={(event) =>
+              setDraft({
+                ...draft,
+                ask_the_locals_api_override: {
+                  ...draft.ask_the_locals_api_override,
+                  label: event.target.value,
+                },
+              })
+            }
+          />
+        </label>
+        <label className="field">
+          <span>Base URL</span>
+          <input
+            type="url"
+            value={draft.ask_the_locals_api_override.base_url}
+            placeholder="https://api.openai.com/v1"
+            onChange={(event) =>
+              setDraft({
+                ...draft,
+                ask_the_locals_api_override: {
+                  ...draft.ask_the_locals_api_override,
+                  base_url: event.target.value,
+                },
+              })
+            }
+          />
+        </label>
+        <label className="field">
+          <span>Model</span>
+          <input
+            type="text"
+            value={draft.ask_the_locals_api_override.chat_model}
+            placeholder="gpt-4o-mini"
+            onChange={(event) =>
+              setDraft({
+                ...draft,
+                ask_the_locals_api_override: {
+                  ...draft.ask_the_locals_api_override,
+                  chat_model: event.target.value,
+                },
+              })
+            }
+          />
+        </label>
+        <label className="field">
+          <span>
+            API key{" "}
+            {draft.ask_the_locals_api_override.api_key_configured
+              ? "(configured — leave blank to keep)"
+              : ""}
+          </span>
+          <input
+            type="password"
+            value={askTheLocalsApiKeyDraft}
+            autoComplete="off"
+            onChange={(event) => setAskTheLocalsApiKeyDraft(event.target.value)}
+          />
+        </label>
+      </Panel>
+
       {saveError && <ErrorBanner message={saveError} />}
       <div className="button-row">
         <button
@@ -356,7 +521,9 @@ export function SettingsPage() {
           className="button primary"
           disabled={saveSettings.isPending}
           onClick={() =>
-            void saveSettings.mutateAsync(toUpdatePayload(draft, apiKeyDrafts, aiToolingApiKeyDraft))
+            void saveSettings.mutateAsync(
+              toUpdatePayload(draft, apiKeyDrafts, aiToolingApiKeyDraft, askTheLocalsApiKeyDraft),
+            )
           }
         >
           {saveSettings.isPending ? "Saving…" : "Save settings"}

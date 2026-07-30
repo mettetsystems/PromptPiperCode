@@ -1,6 +1,7 @@
 import type { HealthResponse, LlmHealthResponse } from "@prompt-piper/shared";
 import { apiFetch } from "./http";
 import type {
+  AskTheLocalsResponse,
   ClarificationSuggestionsResponse,
   InferenceSettingsResponse,
   PrecisionReviewResponse,
@@ -63,6 +64,12 @@ export function suggestClarification(
   sessionId: string,
 ): Promise<ClarificationSuggestionsResponse> {
   return apiFetch<ClarificationSuggestionsResponse>(`/sessions/${sessionId}/clarify/suggest`, {
+    method: "POST",
+  });
+}
+
+export function askTheLocals(sessionId: string): Promise<AskTheLocalsResponse> {
+  return apiFetch<AskTheLocalsResponse>(`/sessions/${sessionId}/clarify/locals`, {
     method: "POST",
   });
 }

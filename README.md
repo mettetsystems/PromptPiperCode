@@ -38,26 +38,35 @@ Each top-level folder has a **README** describing its files and how they fit tog
 
 ## Quick start (native dev)
 
-**Prerequisites:** Python 3.12+, Node.js 20+, Make
+**Prerequisites:** Python 3.12+, Node.js 20+, Make  
+**For local SLM:** NVIDIA/AMD GPU drivers, [`llama-server`](https://github.com/ggerganov/llama.cpp) on `PATH`, and a GGUF under `data/models/`
+
+Run all commands from the **PromptPiperCode repo root**.
 
 ```bash
-# Copy environment template and install Python + Node dependencies
+# 1) Environment + Python/Node/WordNet deps
 cp .env.example .env
-make install   # also installs lexicon embed deps + downloads WordNet
+make install
+
+# 2) Choose CPU-only or a local SLM (Gemma / Qwen / custom).
+#    For SLM presets, setup installs hf tooling, offers to download the GGUF,
+#    and checks for llama-server.
+make setup
+
+# 3) If you skipped the download prompt (or need to re-fetch):
+make download-model
 
 # Optional: full semantic vector index (~20–60 min CPU; skipped if already built)
 make setup-lexicon-all
+```
 
 On **low-VRAM GPUs** (e.g. GTX 1050 2GB), `build-lexicon-index` forces CPU embedding (`CUDA_VISIBLE_DEVICES=`) so it does not compete with llama.cpp on the GPU. Runtime vector search also uses CPU unless you have headroom; the local model still reranks candidates on GPU when healthy.
 
-# Interactive wizard: CPU-only mode or local SLM (Gemma / Qwen / custom endpoint)
-make setup
-```
-
-Run the API and web app in separate terminals:
+Run the API and web app in separate terminals (from a host shell where `nvidia-smi` / `rocm-smi` works):
 
 ```bash
-# Terminal 1 — FastAPI on :8000; auto-starts llama when GPU + model path are set
+# Terminal 1 — FastAPI on :8000; ensure_llm starts llama-server when GPU + GGUF + binary exist
+make ensure-llm   # optional dry-run of the GPU/model probe
 make dev-api
 
 # Terminal 2 — Vite dev server on :5173; proxies API routes to :8000
@@ -84,6 +93,9 @@ PromptPiperCode is developed and tested on Fedora first. Install native dev tool
 # Python 3.12, Node, build tools, Podman
 sudo dnf install python3.12 python3.12-devel nodejs npm make git \
   podman podman-compose
+
+# Local SLM server used by make ensure-llm / make dev-api
+sudo dnf install llama-cpp
 
 # Optional: HTML/PDF export when running API natively (not in container)
 sudo dnf install pandoc
