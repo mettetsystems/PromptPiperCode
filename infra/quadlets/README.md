@@ -15,14 +15,33 @@ Clone or copy the repo to `~/PromptPiperCode` (Quadlet paths assume `%h/PromptPi
 
 ## Quick install
 
-From the repo root:
+### One-shot Make targets (recommended)
+
+From the repo root, these build images, run tests, install Quadlets, enable systemd user units (with linger), wait for `/health`, and open the default browser:
+
+```bash
+make persistent-install-cpu   # CPU-only (no llama profile)
+make persistent-install-ai    # Local SLM via compose llama profile (default: qwen3-1.7b)
+```
+
+Overrides:
+
+```bash
+./scripts/persistent-install.sh ai --preset qwen3-4b
+SKIP_TESTS=1 SKIP_BROWSER=1 make persistent-install-cpu
+SKIP_BUILD=1 make persistent-install-cpu   # after make export / podman load
+```
+
+### Manual Quadlet copy
 
 ```bash
 chmod +x scripts/install-quadlets.sh scripts/init-db-quadlet.sh
 ./scripts/install-quadlets.sh --method compose
+# AI stack with llama profile:
+./scripts/install-quadlets.sh --method compose --profiles llama --start
 ```
 
-Then follow the printed steps (build, `daemon-reload`, enable service, init DB).
+Then follow the printed steps (build, `daemon-reload`, enable service, init DB) when not using `--start`.
 
 ---
 

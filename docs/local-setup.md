@@ -165,6 +165,33 @@ Full local stack:
 
 See [README](../README.md#podman-setup-local-first-no-cloud) for Fedora setup, volumes, and troubleshooting.
 
+### Persistent install (Quadlet + systemd)
+
+Boot-persistent installs build images, run tests, install user Quadlets, enable linger, wait for API health, and open the default browser:
+
+```bash
+make persistent-install-cpu
+make persistent-install-ai
+./scripts/persistent-install.sh ai --preset qwen3-4b
+```
+
+| Mode | `.env` | Compose |
+|------|--------|---------|
+| CPU | `cpu-only` | api + web + postgres |
+| AI | `podman:<preset>` + GGUF under `data/models/model.gguf` | adds `llama` profile |
+
+Useful overrides: `SKIP_TESTS=1`, `SKIP_BROWSER=1`, `SKIP_BUILD=1` (after loading an offline image archive).
+
+### Offline image export
+
+```bash
+make export
+./scripts/export-images.sh --with-ai
+# On disconnected host:
+podman load -i dist/prompt-piper-images-....tar
+SKIP_BUILD=1 make persistent-install-cpu
+```
+
 Postgres only:
 
 ```bash

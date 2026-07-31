@@ -36,6 +36,8 @@ class ClarificationSuggestionsResponse(BaseModel):
 class AskTheLocalsResponse(BaseModel):
     field_name: str
     insight: str = ""
+    recommended_answer: str = ""
+    previous_answers_used: list[str] = Field(default_factory=list)
     model_available: bool = False
     model_source: str | None = None
     message: str | None = None

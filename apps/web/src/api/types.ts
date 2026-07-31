@@ -311,6 +311,8 @@ export interface ClarificationVersionsSettings {
 export interface AskTheLocalsResponse {
   field_name: string;
   insight: string;
+  recommended_answer: string;
+  previous_answers_used: string[];
   model_available: boolean;
   model_source: string | null;
   message: string | null;
