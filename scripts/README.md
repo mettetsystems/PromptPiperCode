@@ -14,6 +14,8 @@ Bash helpers invoked by `Makefile` targets. Run from repo root unless noted.
 | `init-db.sh` | `make podman-init-db` | Verify pgvector and app tables |
 | `init-db-quadlet.sh` | — | DB init variant for Quadlet deployments |
 | `install-quadlets.sh` | — | Install user systemd Quadlet units |
+| `persistent-install.sh` | `make persistent-install-cpu` / `make persistent-install-ai` | Build, test, Quadlet+systemd install, open browser |
+| `export-images.sh` | `make export` | Build images and save an offline `.tar` bundle |
 
 ```bash
 # Example: start native API with auto-LLM
@@ -21,6 +23,16 @@ Bash helpers invoked by `Makefile` targets. Run from repo root unless noted.
 
 # Example: tail API container logs
 ./scripts/dev-logs.sh api
+
+# Boot-persistent CPU or AI install (Quadlets + systemd)
+make persistent-install-cpu
+make persistent-install-ai
+# Optional: ./scripts/persistent-install.sh ai --preset qwen3-4b
+
+# Offline image bundle for disconnected hosts
+make export
+./scripts/export-images.sh --with-ai
+./scripts/export-images.sh --import dist/prompt-piper-images-....tar
 ```
 
 All scripts use `set -euo pipefail` and resolve repo root relative to their own path.

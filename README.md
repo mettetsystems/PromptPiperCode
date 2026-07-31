@@ -176,14 +176,32 @@ Bind mounts use the `:Z` flag for rootless Podman on Fedora (SELinux).
 To run PromptPiperCode as user systemd services that start at login/boot:
 
 ```bash
-# Install systemd Quadlet units for user session
+# Full install: deps + build + tests + Quadlets + open browser
+make persistent-install-cpu   # rule-based / CPU-only
+make persistent-install-ai    # local SLM (compose llama profile; default qwen3-1.7b)
+
+# Or install units only, then follow printed build/enable steps
 ./scripts/install-quadlets.sh --method compose
 
-# Keep user services running after logout (optional)
+# Keep user services running after logout (optional; persistent-install enables this)
 loginctl enable-linger "$USER"
 ```
 
 See [infra/quadlets/README.md](infra/quadlets/README.md) for compose vs individual container units, build steps, and troubleshooting.
+
+### Offline image export
+
+Build API + web images (plus Postgres base) and save a single archive for disconnected hosts:
+
+```bash
+make export
+# Include llama.cpp server image as well:
+./scripts/export-images.sh --with-ai
+
+# On the target machine:
+podman load -i dist/prompt-piper-images-....tar
+SKIP_BUILD=1 make persistent-install-cpu   # or persistent-install-ai
+```
 
 Each export creates a new folder:
 

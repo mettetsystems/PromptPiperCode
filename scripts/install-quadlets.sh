@@ -6,10 +6,16 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 QUADLET_SRC="${ROOT}/infra/quadlets"
 QUADLET_DEST="${HOME}/.config/containers/systemd"
 METHOD="compose"
+PROFILES=""
+START=0
+QUIET=0
+
+# Path token used in shipped Quadlet files (repo expected under $HOME by default).
+DEFAULT_REPO_TOKEN="%h/PromptPiperCode"
 
 usage() {
   cat <<EOF
-Usage: $(basename "$0") [--method compose|containers]
+Usage: $(basename "$0") [--method compose|containers] [--profiles LIST] [--start] [--quiet]
 
 Install PromptPiperCode Quadlet units into:
   ${QUADLET_DEST}
@@ -18,7 +24,12 @@ Methods:
   compose     Install prompt-piper.compose (recommended; uses podman-compose.yml)
   containers  Install .network + postgres + api + web container units
 
-After install:
+Options:
+  --profiles LIST   Comma-separated compose profiles (e.g. llama for local SLM)
+  --start           daemon-reload, enable linger hint, enable --now the units
+  --quiet           Skip the long "Next steps" footer (still prints paths)
+
+After install (without --start):
   loginctl enable-linger "\$USER"    # start at boot without login
   systemctl --user daemon-reload
   systemctl --user enable --now prompt-piper.service   # compose method
@@ -31,6 +42,18 @@ while [[ $# -gt 0 ]]; do
     --method)
       METHOD="${2:-}"
       shift 2
+      ;;
+    --profiles)
+      PROFILES="${2:-}"
+      shift 2
+      ;;
+    --start)
+      START=1
+      shift
+      ;;
+    --quiet)
+      QUIET=1
+      shift
       ;;
     -h | --help)
       usage
@@ -57,6 +80,7 @@ mkdir -p \
   "${ROOT}/data/model-cache" \
   "${ROOT}/data/nltk_data" \
   "${ROOT}/data/lexicon" \
+  "${ROOT}/data/models" \
   "${QUADLET_DEST}"
 
 if [[ ! -f "${ROOT}/.env" ]]; then
@@ -69,21 +93,50 @@ if [[ -x "${ROOT}/apps/api/.venv/bin/python" ]]; then
   "${ROOT}/scripts/setup-lexicon.sh" --skip-index || true
 fi
 
-mkdir -p "${QUADLET_DEST}"
+# Rewrite shipped %h/PromptPiperCode tokens when the clone is elsewhere.
+rewrite_quadlet_paths() {
+  local file="$1"
+  if [[ "${ROOT}" == "${HOME}/PromptPiperCode" ]]; then
+    return 0
+  fi
+  # Prefer absolute paths so units work from any clone location.
+  sed -i "s|${DEFAULT_REPO_TOKEN}|${ROOT}|g" "${file}"
+}
 
 case "${METHOD}" in
   compose)
     cp "${QUADLET_SRC}/prompt-piper.compose" "${QUADLET_DEST}/"
+    rewrite_quadlet_paths "${QUADLET_DEST}/prompt-piper.compose"
+    if [[ -n "${PROFILES}" ]]; then
+      if grep -q '^Profiles=' "${QUADLET_DEST}/prompt-piper.compose"; then
+        sed -i "s|^Profiles=.*|Profiles=${PROFILES}|" "${QUADLET_DEST}/prompt-piper.compose"
+      else
+        # Insert after WorkingDirectory= in the [Compose] section.
+        sed -i "/^WorkingDirectory=/a Profiles=${PROFILES}" "${QUADLET_DEST}/prompt-piper.compose"
+      fi
+      echo "Compose profiles enabled: ${PROFILES}"
+    fi
     echo "Installed compose Quadlet: ${QUADLET_DEST}/prompt-piper.compose"
     echo "Generates user unit: prompt-piper.service"
     ;;
   containers)
+    if [[ -n "${PROFILES}" ]]; then
+      echo "warning: --profiles only applies to --method compose; ignoring for containers" >&2
+    fi
     cp \
       "${QUADLET_SRC}/prompt-piper.network" \
       "${QUADLET_SRC}/prompt-piper-postgres.container" \
       "${QUADLET_SRC}/prompt-piper-api.container" \
       "${QUADLET_SRC}/prompt-piper-web.container" \
       "${QUADLET_DEST}/"
+    for unit in \
+      prompt-piper.network \
+      prompt-piper-postgres.container \
+      prompt-piper-api.container \
+      prompt-piper-web.container
+    do
+      rewrite_quadlet_paths "${QUADLET_DEST}/${unit}"
+    done
     echo "Installed container Quadlets in ${QUADLET_DEST}/"
     echo "Units: prompt-piper-network, prompt-piper-postgres, prompt-piper-api, prompt-piper-web"
     ;;
@@ -92,6 +145,32 @@ case "${METHOD}" in
     exit 1
     ;;
 esac
+
+if [[ "${START}" -eq 1 ]]; then
+  if ! loginctl show-user "${USER}" -p Linger 2>/dev/null | grep -q 'Linger=yes'; then
+    echo "Enabling linger so user services start at boot without login..."
+    if ! loginctl enable-linger "${USER}" 2>/dev/null; then
+      echo "warning: could not enable linger automatically. Run: loginctl enable-linger \"\$USER\"" >&2
+    fi
+  fi
+
+  systemctl --user daemon-reload
+
+  if [[ "${METHOD}" == "compose" ]]; then
+    systemctl --user enable --now prompt-piper.service
+    "${ROOT}/scripts/init-db.sh"
+  else
+    systemctl --user enable --now prompt-piper-network.service
+    systemctl --user enable --now prompt-piper-postgres.service
+    systemctl --user enable --now prompt-piper-api.service
+    systemctl --user enable --now prompt-piper-web.service
+    "${ROOT}/scripts/init-db-quadlet.sh"
+  fi
+fi
+
+if [[ "${QUIET}" -eq 1 ]]; then
+  exit 0
+fi
 
 cat <<EOF
 
@@ -104,10 +183,17 @@ Next steps:
 EOF
 
 if [[ "${METHOD}" == "compose" ]]; then
-  cat <<EOF
+  if [[ -n "${PROFILES}" ]]; then
+    cat <<EOF
+     cd ${ROOT}
+     podman compose -f infra/podman-compose.yml --profile ${PROFILES//,/ --profile } build
+EOF
+  else
+    cat <<EOF
      cd ${ROOT}
      podman compose -f infra/podman-compose.yml build
 EOF
+  fi
 else
   cat <<EOF
      cd ${ROOT}

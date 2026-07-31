@@ -147,6 +147,7 @@ export function ClarificationPage({ sessionId, session, readOnly = false }: Clar
     null,
   );
   const [localsInsight, setLocalsInsight] = useState<AskTheLocalsResponse | null>(null);
+  const [localsCopied, setLocalsCopied] = useState(false);
 
   const questionKey = `${session.clarification_question_number ?? 0}:${session.clarification_field ?? ""}`;
 
@@ -155,6 +156,7 @@ export function ClarificationPage({ sessionId, session, readOnly = false }: Clar
     setCustomAnswer("");
     setModelSuggestions(null);
     setLocalsInsight(null);
+    setLocalsCopied(false);
   }, [questionKey]);
 
   const questionNumber = session.clarification_question_number ?? 1;
@@ -198,7 +200,27 @@ export function ClarificationPage({ sessionId, session, readOnly = false }: Clar
   async function requestLocalsInsight() {
     const result = await locals.mutateAsync();
     setLocalsInsight(result);
+    setLocalsCopied(false);
   }
+
+  async function copyLocalsRecommendation(text: string) {
+    if (!text.trim()) {
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      setLocalsCopied(true);
+      window.setTimeout(() => setLocalsCopied(false), 2000);
+    } catch {
+      setLocalsCopied(false);
+    }
+  }
+
+  const localsCopyText =
+    localsInsight?.recommended_answer?.trim() || localsInsight?.insight?.trim() || "";
+  const localsHasInsight =
+    Boolean(localsInsight?.insight?.trim()) &&
+    localsInsight?.insight?.trim() !== localsCopyText;
 
   const errorMessage =
     locals.error != null
@@ -250,7 +272,7 @@ export function ClarificationPage({ sessionId, session, readOnly = false }: Clar
             <p className="muted">
               {readOnly
                 ? "Review the requirement card for answers captured during clarification."
-                : "Pick quick replies and/or add custom text, then submit. Expand Beginner for option guides, or Ask The Locals for model insight."}
+                : "Pick quick replies and/or add custom text, then submit. Expand Beginner for option guides, or Ask The Locals for a contextual recommendation under your custom answer."}
             </p>
             {!readOnly && (
               <>
@@ -283,8 +305,8 @@ export function ClarificationPage({ sessionId, session, readOnly = false }: Clar
                     title={
                       localsEnabled
                         ? localsOverrideActive
-                          ? "Ask your configured Ask The Locals model for insight about this question"
-                          : "Ask the current AI tooling model for insight about this question"
+                          ? "Ask your configured Ask The Locals model for a contextual recommendation based on prior answers"
+                          : "Ask the current AI tooling model for a contextual recommendation based on prior answers"
                         : "Configure AI tooling or an Ask The Locals API in Settings"
                     }
                     onClick={() => void requestLocalsInsight()}
@@ -305,20 +327,6 @@ export function ClarificationPage({ sessionId, session, readOnly = false }: Clar
                     {suggest.isPending ? "Querying model…" : "Get model suggestions"}
                   </button>
                 </div>
-                {localsInsight && (
-                  <div className="locals-insight">
-                    <p className="muted">
-                      {localsInsight.message ??
-                        (localsInsight.model_available
-                          ? "Local insight"
-                          : "Ask The Locals unavailable.")}
-                      {localsInsight.model_source ? ` · ${localsInsight.model_source}` : ""}
-                    </p>
-                    {localsInsight.insight && (
-                      <p className="locals-insight-body">{localsInsight.insight}</p>
-                    )}
-                  </div>
-                )}
                 {modelSuggestions && (
                   <div className="model-suggestions">
                     <p className="muted">
@@ -366,6 +374,59 @@ export function ClarificationPage({ sessionId, session, readOnly = false }: Clar
                     disabled={selectedOptions.includes("unspecified")}
                   />
                 </label>
+                {localsInsight && (
+                  <div className="locals-insight locals-copy-window" aria-live="polite">
+                    <div className="locals-copy-header">
+                      <div>
+                        <p className="locals-copy-title">Ask The Locals recommendation</p>
+                        <p className="muted locals-copy-meta">
+                          {localsInsight.message ??
+                            (localsInsight.model_available
+                              ? "Contextual recommendation"
+                              : "Ask The Locals unavailable.")}
+                          {localsInsight.model_source ? ` · ${localsInsight.model_source}` : ""}
+                          {localsInsight.previous_answers_used.length > 0
+                            ? ` · grounded in ${localsInsight.previous_answers_used.length} prior answer${
+                                localsInsight.previous_answers_used.length === 1 ? "" : "s"
+                              }`
+                            : ""}
+                        </p>
+                      </div>
+                      <div className="button-row locals-copy-actions">
+                        <button
+                          type="button"
+                          className="button secondary"
+                          disabled={!localsCopyText}
+                          onClick={() => void copyLocalsRecommendation(localsCopyText)}
+                        >
+                          {localsCopied ? "Copied" : "Copy"}
+                        </button>
+                        <button
+                          type="button"
+                          className="button secondary"
+                          disabled={!localsCopyText || selectedOptions.includes("unspecified")}
+                          onClick={() => setCustomAnswer(localsCopyText)}
+                        >
+                          Use in custom answer
+                        </button>
+                      </div>
+                    </div>
+                    {localsCopyText ? (
+                      <textarea
+                        className="locals-copy-text"
+                        rows={4}
+                        readOnly
+                        value={localsCopyText}
+                        aria-label="Ask The Locals copyable recommendation"
+                      />
+                    ) : (
+                      <p className="muted">No recommendation text was returned.</p>
+                    )}
+                    {localsHasInsight && (
+                      <p className="locals-insight-body">{localsInsight.insight}</p>
+                    )}
+                  </div>
+                )}
                 {errorMessage && <ErrorBanner message={errorMessage} />}
                 <div className="button-row">
                   <button

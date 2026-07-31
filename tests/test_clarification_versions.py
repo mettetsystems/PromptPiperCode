@@ -1,8 +1,17 @@
 from __future__ import annotations
 
+import json
+
 from fastapi.testclient import TestClient
 
+from prompt_piper_api.domain.requirement_card import RequirementCard
 from prompt_piper_api.domain.user_settings import ClarificationVersionsAvailable
+from prompt_piper_api.llm.base import ChatMessage
+from prompt_piper_api.llm.mock import MockLLMClient
+from prompt_piper_api.services.ask_the_locals_service import (
+    AskTheLocalsService,
+    collect_previous_answers,
+)
 from prompt_piper_api.services.clarification_option_guides import (
     assert_guides_cover_all_options,
     build_quick_reply_guides,
@@ -15,8 +24,6 @@ from prompt_piper_api.services.clarification_prompts import (
     build_version_texts,
 )
 from prompt_piper_api.services.clarification_question_ranker import ClarificationQuestionRanker
-from prompt_piper_api.services.ask_the_locals_service import AskTheLocalsService
-from prompt_piper_api.domain.requirement_card import RequirementCard
 
 
 def test_prompt_maps_cover_same_fields() -> None:
@@ -76,8 +83,56 @@ def test_ask_the_locals_falls_back_without_model() -> None:
     )
     assert result.model_available is False
     assert result.insight == ""
+    assert result.recommended_answer == ""
     assert result.message is not None
     assert "unavailable" in result.message.lower()
+
+
+def test_ask_the_locals_uses_previous_answers_for_recommendation() -> None:
+    captured: dict[str, object] = {}
+
+    def responder(messages: list[ChatMessage]) -> str:
+        captured["user"] = messages[-1].content
+        return json.dumps(
+            {
+                "insight": "Stay consistent with the FastAPI stack already chosen.",
+                "recommended_answer": "Use Pydantic v2 request models matching the existing signup schema.",
+            }
+        )
+
+    card = RequirementCard(
+        technical_context={"environment": "Python 3.12 with FastAPI"},
+        core_task_scope={"objective": "Add a user signup endpoint"},
+    )
+    result = AskTheLocalsService(MockLLMClient(chat_responder=responder)).ask(
+        initial_request="Write a FastAPI signup endpoint",
+        card=card,
+        field_name="inputs_outputs_contracts.inputs",
+        last_answer="Python 3.12 with FastAPI",
+        asked_fields=["technical_context.environment"],
+        model_source="ai-tooling",
+    )
+
+    assert result.model_available is True
+    assert result.recommended_answer.startswith("Use Pydantic")
+    assert "technical_context.environment" in result.previous_answers_used
+    assert "core_task_scope.objective" in result.previous_answers_used
+    assert "inputs_outputs_contracts.inputs" not in result.previous_answers_used
+    user_payload = json.loads(str(captured["user"]))
+    assert user_payload["previous_answers"]["technical_context.environment"] == (
+        "Python 3.12 with FastAPI"
+    )
+    assert "Contextual recommendation" in (result.message or "")
+
+
+def test_collect_previous_answers_skips_empty_and_active_field() -> None:
+    card = RequirementCard(
+        technical_context={"environment": "Python 3.12"},
+        core_task_scope={"objective": "Build signup"},
+    )
+    answers = collect_previous_answers(card, exclude_field="technical_context.environment")
+    assert "technical_context.environment" not in answers
+    assert answers["core_task_scope.objective"] == "Build signup"
 
 
 def test_ask_the_locals_api_route(client: TestClient) -> None:
