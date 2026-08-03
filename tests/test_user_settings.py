@@ -137,6 +137,49 @@ def test_user_settings_preserves_api_key_when_blank_in_update(tmp_path: Path) ->
     assert loaded.ai_tooling_api_override.api_key == "tooling-secret"
 
 
+def test_ask_the_locals_client_uses_override_when_env_llm_disabled(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from prompt_piper_api.domain.user_settings import AskTheLocalsApiOverride
+    from prompt_piper_api.llm.factory import create_ask_the_locals_client
+
+    settings_path = tmp_path / "user_settings.json"
+    service = UserSettingsService(settings_path)
+    service.save(
+        UserSettings(
+            llm_enabled=True,
+            ask_the_locals_api_override=AskTheLocalsApiOverride(
+                label="Locals",
+                base_url="https://locals.example/v1",
+                chat_model="locals-model",
+                api_key="locals-key",
+            ),
+        ),
+    )
+    monkeypatch.setattr(
+        "prompt_piper_api.services.user_settings_service.get_user_settings_service",
+        lambda: service,
+    )
+    app_settings = Settings(
+        registry_path=tmp_path / "registry",
+        artifacts_path=tmp_path / "artifacts",
+        audit_log_path=tmp_path / "audit",
+        prompt_piper_export_root=tmp_path,
+        prompt_piper_host_export_root=tmp_path,
+        prompt_piper_registry_root=tmp_path / "registry",
+        prompt_piper_artifact_root=tmp_path / "artifacts",
+        prompt_piper_llm_enabled=False,
+        prompt_piper_local_base_url="http://127.0.0.1:8080/v1",
+        prompt_piper_local_chat_model="local-model",
+    )
+
+    client, source = create_ask_the_locals_client(app_settings)
+    assert client is not None
+    assert "Ask The Locals API" in source
+    assert client.settings.base_url == "https://locals.example/v1"
+    assert client.settings.model_name == "locals-model"
+
+
 def test_load_local_chat_settings_uses_ai_tooling_override(tmp_path: Path, monkeypatch) -> None:
     settings_path = tmp_path / "user_settings.json"
     service = UserSettingsService(settings_path)

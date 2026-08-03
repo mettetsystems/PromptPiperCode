@@ -11,6 +11,7 @@ from prompt_piper_api.llm.mock import MockLLMClient
 from prompt_piper_api.services.ask_the_locals_service import (
     AskTheLocalsService,
     collect_previous_answers,
+    parse_json_object,
 )
 from prompt_piper_api.services.clarification_option_guides import (
     assert_guides_cover_all_options,
@@ -82,10 +83,18 @@ def test_ask_the_locals_falls_back_without_model() -> None:
         field_name="technical_context.environment",
     )
     assert result.model_available is False
-    assert result.insight == ""
-    assert result.recommended_answer == ""
+    assert result.insight
+    assert result.recommended_answer
     assert result.message is not None
-    assert "unavailable" in result.message.lower()
+    assert "guide-based" in result.message.lower()
+
+
+def test_parse_json_object_tolerates_fences_and_extra_text() -> None:
+    payload = parse_json_object(
+        'Sure!\n```json\n{"insight": "Hello", "recommended_answer": "Use FastAPI"}\n```\n'
+    )
+    assert payload["insight"] == "Hello"
+    assert payload["recommended_answer"] == "Use FastAPI"
 
 
 def test_ask_the_locals_uses_previous_answers_for_recommendation() -> None:
@@ -147,7 +156,8 @@ def test_ask_the_locals_api_route(client: TestClient) -> None:
     payload = response.json()
     assert payload["field_name"]
     assert payload["model_available"] is False
-    assert "unavailable" in (payload["message"] or "").lower()
+    assert payload["recommended_answer"]
+    assert "guide-based" in (payload["message"] or "").lower()
 
 
 def test_session_api_returns_clarification_versions(client: TestClient) -> None:

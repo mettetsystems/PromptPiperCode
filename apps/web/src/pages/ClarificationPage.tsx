@@ -168,8 +168,10 @@ export function ClarificationPage({ sessionId, session, readOnly = false }: Clar
   const canSubmit = combinedAnswer !== null;
   const modelEnabled = llmHealth.data?.llm_enabled === true && llmHealth.data.status === "ok";
   const localsOverrideActive = userSettings.data?.ask_the_locals_override_active === true;
-  const localsEnabled =
-    userSettings.data?.llm_enabled !== false && (localsOverrideActive || modelEnabled);
+  // Keep Ask The Locals clickable whenever AI assistance is on. The API returns a
+  // guide-based recommendation when the model is down, and the dedicated Ask The
+  // Locals override works even if the setup-wizard local model is offline.
+  const localsEnabled = userSettings.data?.llm_enabled !== false;
   const availability = userSettings.data?.clarification_versions ?? DEFAULT_VERSIONS;
   const versions = useMemo(
     () => session.clarification_versions ?? [],
@@ -306,8 +308,10 @@ export function ClarificationPage({ sessionId, session, readOnly = false }: Clar
                       localsEnabled
                         ? localsOverrideActive
                           ? "Ask your configured Ask The Locals model for a contextual recommendation based on prior answers"
-                          : "Ask the current AI tooling model for a contextual recommendation based on prior answers"
-                        : "Configure AI tooling or an Ask The Locals API in Settings"
+                          : modelEnabled
+                            ? "Ask the current AI tooling model for a contextual recommendation based on prior answers"
+                            : "Ask for a recommendation (uses the model when available, otherwise guide-based defaults)"
+                        : "Turn on Enable AI assistance in Settings to use Ask The Locals"
                     }
                     onClick={() => void requestLocalsInsight()}
                   >

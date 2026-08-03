@@ -112,18 +112,25 @@ def create_ask_the_locals_client(
     """Build the LLM client for Ask The Locals.
 
     Prefers a dedicated Ask The Locals API override when configured (live, no restart).
+    The dedicated override works even when PROMPT_PIPER_LLM_ENABLED=false (CPU-only),
+    as long as Settings → Enable AI assistance is on.
     Otherwise uses the current AI tooling model (setup wizard or tooling override).
     """
     from prompt_piper_api.services.user_settings_service import get_user_settings_service
 
     app_settings = settings or get_settings()
     user_settings = get_user_settings_service()
-    if not user_settings.is_llm_enabled(app_settings):
+    prefs = user_settings.load()
+    # Master toggle in Settings — not the env/ensure_llm CPU-only flag.
+    if not prefs.llm_enabled:
         return None, "disabled"
 
-    locals_override = user_settings.load().ask_the_locals_api_override
+    locals_override = prefs.ask_the_locals_api_override
+    temperature, max_tokens = profile_defaults(app_settings.prompt_piper_model_profile)
+    # Local SLMs can be slow on the richer Ask The Locals prompt.
+    locals_timeout = 120.0
+
     if locals_override.configured:
-        temperature, max_tokens = profile_defaults(app_settings.prompt_piper_model_profile)
         chat_settings = ModelSettings(
             provider=ModelProvider.EXTERNAL_OPENAI_COMPATIBLE,
             base_url=locals_override.base_url.strip(),
@@ -139,20 +146,32 @@ def create_ask_the_locals_client(
             LocalOpenAICompatibleClient(
                 chat_settings,
                 embed_model_name=app_settings.prompt_piper_local_embed_model,
+                timeout=locals_timeout,
             ),
             f"Ask The Locals API ({label})",
         )
 
-    client = create_llm_client(app_settings)
-    if client is None:
+    if not user_settings.is_llm_enabled(app_settings):
         return None, "unavailable"
-    tooling = user_settings.load().ai_tooling_api_override
+
+    chat_settings = load_local_chat_settings(app_settings)
+    if not chat_settings.enabled:
+        return None, "unavailable"
+
+    tooling = prefs.ai_tooling_api_override
     if tooling.configured:
         label = tooling.label.strip() or tooling.chat_model.strip()
-        return client, f"Current AI tooling ({label})"
+        source = f"Current AI tooling ({label})"
+    else:
+        source = f"Current AI tooling ({chat_settings.model_name})"
+
     return (
-        client,
-        f"Current AI tooling ({app_settings.prompt_piper_local_chat_model})",
+        LocalOpenAICompatibleClient(
+            chat_settings,
+            embed_model_name=app_settings.prompt_piper_local_embed_model,
+            timeout=locals_timeout,
+        ),
+        source,
     )
 
 
