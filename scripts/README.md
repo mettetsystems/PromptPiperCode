@@ -8,6 +8,7 @@ Bash helpers invoked by `Makefile` targets. Run from repo root unless noted.
 | `download-model.sh` | `make download-model` | Download GGUF from `.env` into `data/models/` |
 | `dev-api.sh` | `make dev-api` | `ensure_llm` + uvicorn with reload on API dirs only |
 | `ensure-llm.sh` | `make ensure-llm` | GPU probe and llama-server start |
+| `shutdown.sh` | `make shutdown` (`make stop`) | SIGTERM/SIGKILL native API+Vite, llama-server, Quadlets, Podman compose |
 | `dev-up.sh` | `make podman-up` | Create export dirs, `podman compose up` |
 | `dev-down.sh` | `make podman-down` | Stop compose stack |
 | `dev-logs.sh` | `make podman-logs` | Follow service logs (`api`, `web`, `postgres`, …) |
@@ -20,6 +21,9 @@ Bash helpers invoked by `Makefile` targets. Run from repo root unless noted.
 ```bash
 # Example: start native API with auto-LLM
 ./scripts/dev-api.sh
+
+# Example: stop native API, Vite, llama-server, Quadlets, and Podman
+make shutdown
 
 # Example: tail API container logs
 ./scripts/dev-logs.sh api

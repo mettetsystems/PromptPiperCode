@@ -4,8 +4,8 @@ One page component per workflow stage or registry view.
 
 | Page | Route | Role |
 |------|-------|------|
-| `DashboardPage.tsx` | `/` | Recent sessions and registry shortcuts |
-| `NewSessionPage.tsx` | `/sessions/new` | Create coding-prompt session from initial request |
+| `DashboardPage.tsx` | `/` | Recent sessions (delete removes the session file) and registry shortcuts |
+| `NewSessionPage.tsx` | `/sessions/new` | Initial prompt — paste tables become markdown |
 | `ClarificationPage.tsx` | `…/clarify` | Multi-select answers for six coding dimensions |
 | `DraftEditorPage.tsx` | `…/edit` | NL edit instructions, finalize |
 | `SimilarityCheckPage.tsx` | `…/similarity` | Match review, continue to optimize |

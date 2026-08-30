@@ -12,6 +12,8 @@ class SessionStore(Protocol):
 
     def save(self, record: SessionRecord) -> None: ...
 
+    def delete(self, session_id: UUID) -> None: ...
+
 
 class InMemorySessionStore:
     """Ephemeral session storage for unit tests."""
@@ -24,6 +26,9 @@ class InMemorySessionStore:
 
     def save(self, record: SessionRecord) -> None:
         self._records[record.session.id] = record
+
+    def delete(self, session_id: UUID) -> None:
+        self._records.pop(session_id, None)
 
 
 class FileSessionStore:
@@ -48,6 +53,10 @@ class FileSessionStore:
             record.model_dump_json(indent=2),
             encoding="utf-8",
         )
+
+    def delete(self, session_id: UUID) -> None:
+        path = self._path(session_id)
+        path.unlink(missing_ok=True)
 
 
 def create_session_store(sessions_path: Path) -> SessionStore:

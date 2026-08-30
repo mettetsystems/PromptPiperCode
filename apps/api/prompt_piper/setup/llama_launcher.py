@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import os
 import shutil
+import signal
 import subprocess
 import time
+from contextlib import suppress
 from dataclasses import dataclass
 from pathlib import Path
 from urllib.error import URLError
@@ -23,6 +25,9 @@ class LlamaServerConfig:
 
 
 def repo_root() -> Path:
+    override = os.getenv("PROMPT_PIPER_REPO_ROOT")
+    if override and override.strip():
+        return Path(override).expanduser().resolve()
     return Path(__file__).resolve().parents[4]
 
 
@@ -154,17 +159,35 @@ def _pid_is_running(pid: int) -> bool:
     return True
 
 
+def _send_signal(pid: int, sig: int) -> None:
+    try:
+        os.killpg(pid, sig)
+        return
+    except ProcessLookupError:
+        return
+    except OSError:
+        pass
+    try:
+        os.kill(pid, sig)
+    except OSError:
+        return
+
+
 def stop_managed_server() -> bool:
     pid = read_managed_pid()
     if pid is None:
         return False
     if _pid_is_running(pid):
-        os.kill(pid, 15)
-        for _ in range(20):
+        _send_signal(pid, signal.SIGTERM)
+        for _ in range(40):
             if not _pid_is_running(pid):
                 break
             time.sleep(0.25)
-    pid_file_path().unlink(missing_ok=True)
+        if _pid_is_running(pid):
+            _send_signal(pid, signal.SIGKILL)
+            time.sleep(0.25)
+    with suppress(OSError):
+        pid_file_path().unlink(missing_ok=True)
     return True
 
 

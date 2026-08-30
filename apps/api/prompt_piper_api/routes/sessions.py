@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response, status
 
 from prompt_piper_api.config import get_settings
 from prompt_piper_api.llm.factory import create_llm_client_from_env
@@ -92,6 +92,24 @@ def get_session(
 ) -> SessionDetailResponse:
     record = service.get_session(session_id)
     return to_session_detail(record)
+
+
+@router.post("/{session_id}/delete", status_code=status.HTTP_204_NO_CONTENT)
+def delete_session_post(
+    session_id: UUID,
+    service: SessionService = Depends(get_session_service),
+) -> Response:
+    service.delete_session(session_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.delete("/{session_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_session(
+    session_id: UUID,
+    service: SessionService = Depends(get_session_service),
+) -> Response:
+    service.delete_session(session_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post("/{session_id}/clarify/suggest", response_model=ClarificationSuggestionsResponse)

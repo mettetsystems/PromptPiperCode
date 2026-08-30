@@ -53,6 +53,7 @@ export async function apiFetch<T>(
     response = await fetch(`${baseUrl}${path}`, {
       ...init,
       headers: {
+        Accept: "application/json",
         "Content-Type": "application/json",
         ...init?.headers,
       },

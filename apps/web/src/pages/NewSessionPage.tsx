@@ -1,13 +1,15 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { formatApiError } from "../api/http";
 import { useCreateSession } from "../api/hooks";
+import { clipboardToMarkdown, insertText } from "../lib/pastedTable";
 import { sessionPath, sessionStepForState } from "../lib/sessionRouting";
 import { ErrorBanner, PageHeader, Panel } from "../components/ui";
 
 export function NewSessionPage() {
   const navigate = useNavigate();
   const createSession = useCreateSession();
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [request, setRequest] = useState("");
   const [title, setTitle] = useState("");
 
@@ -27,6 +29,27 @@ export function NewSessionPage() {
     }
   }
 
+  function handlePaste(event: React.ClipboardEvent<HTMLTextAreaElement>) {
+    const converted = clipboardToMarkdown(
+      event.clipboardData.getData("text/html"),
+      event.clipboardData.getData("text/plain"),
+    );
+    if (!converted.foundTable) {
+      return;
+    }
+    event.preventDefault();
+    const target = event.currentTarget;
+    const next = insertText(request, target.selectionStart, target.selectionEnd, converted.text);
+    setRequest(next.value);
+    queueMicrotask(() => {
+      const el = textareaRef.current;
+      if (el) {
+        el.focus();
+        el.setSelectionRange(next.cursor, next.cursor);
+      }
+    });
+  }
+
   const errorMessage =
     createSession.error != null
       ? formatApiError(createSession.error, "Failed to create session.")
@@ -35,18 +58,20 @@ export function NewSessionPage() {
   return (
     <div className="page narrow">
       <PageHeader
-        title="New session"
-        subtitle="Describe the coding prompt you want to design. PromptPiperCode will extract six coding dimensions and ask clarifying questions."
+        title="Initial prompt"
+        subtitle="Describe the long-horizon coding task. Nautilius will extract the task identity and ask 16 operational-control questions with conservative defaults."
       />
       <Panel>
         <form className="stack-form" onSubmit={handleSubmit}>
           <label className="field">
-            <span>Initial request</span>
+            <span>Initial prompt</span>
             <textarea
-              rows={8}
+              ref={textareaRef}
+              rows={12}
               value={request}
               onChange={(event) => setRequest(event.target.value)}
-              placeholder="Example: Write a prompt for implementing a FastAPI endpoint with Pydantic v2 models, matching existing service patterns, returning typed JSON, with pytest coverage."
+              onPaste={handlePaste}
+              placeholder="Describe the coding task. Pasted tables become markdown."
               required
             />
           </label>

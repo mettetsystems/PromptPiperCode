@@ -1,4 +1,4 @@
-.PHONY: help install install-api install-web setup setup-lexicon setup-lexicon-embed build-lexicon-index setup-lexicon-all setup-model-deps download-model ensure-llm llama-down dev dev-api dev-web test lint typecheck format clean demo podman-up podman-down podman-logs podman-init-db persistent-install-cpu persistent-install-ai export
+.PHONY: help install install-api install-web setup setup-lexicon setup-lexicon-embed build-lexicon-index setup-lexicon-all setup-model-deps download-model ensure-llm llama-down shutdown stop dev dev-api dev-web test lint typecheck format clean demo podman-up podman-down podman-logs podman-init-db persistent-install-cpu persistent-install-ai export
 
 ROOT := $(CURDIR)
 API_DIR := $(ROOT)/apps/api
@@ -20,6 +20,8 @@ help:
 	@echo "  make setup-lexicon-all WordNet + embeddings + index (skips index if present)"
 	@echo "  make ensure-llm        Probe GPU and start llama-server, or fall back to CPU mode"
 	@echo "  make llama-down        Stop PromptPiperCode-managed llama-server"
+	@echo "  make shutdown          Stop API, Vite, llama-server, Podman, and Quadlets"
+	@echo "  make stop              Same as make shutdown"
 	@echo "  make persistent-install-cpu  Quadlet+systemd CPU install (build, test, browser)"
 	@echo "  make persistent-install-ai   Quadlet+systemd AI/SLM install (build, test, browser)"
 	@echo "  make export            Build container images and save an offline .tar bundle"
@@ -84,6 +86,11 @@ ensure-llm:
 
 llama-down:
 	$(ROOT)/scripts/ensure-llm.sh --stop
+
+shutdown:
+	$(ROOT)/scripts/shutdown.sh
+
+stop: shutdown
 
 dev-web:
 	cd $(WEB_DIR) && npm run dev

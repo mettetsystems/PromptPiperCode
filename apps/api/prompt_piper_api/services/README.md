@@ -6,7 +6,7 @@ Business logic layer. Routes should delegate here rather than mutating domain ob
 
 | Module | Role |
 |--------|------|
-| `session_service.py` | Session state machine — create, clarify, edit, finalize, optimize, approve, export, re-open, template |
+| `session_service.py` | Session state machine — create, clarify, edit, finalize, optimize, approve, export, re-open, template, delete |
 | `session_record.py` | Persisted aggregate — session + drafts + optimization/similarity results |
 | `session_store.py` | `FileSessionStore` / in-memory store (`SESSIONS_PATH`) |
 | `state_transitions.py` | Allowed actions per `SessionState` |

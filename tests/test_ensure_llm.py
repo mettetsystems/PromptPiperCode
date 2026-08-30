@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import subprocess
 from pathlib import Path
 from unittest.mock import patch
 
@@ -7,7 +8,7 @@ import pytest
 
 from prompt_piper.setup.ensure_llm import EnsureLlmResult, ensure_local_llm, shell_export
 from prompt_piper.setup.gpu_detect import GpuInfo
-from prompt_piper.setup.llama_launcher import resolve_model_path
+from prompt_piper.setup.llama_launcher import pid_file_path, resolve_model_path, stop_managed_server
 
 
 def test_resolve_model_path_prefers_existing_gguf(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -101,3 +102,24 @@ def test_detect_gpu_nvidia(monkeypatch: pytest.MonkeyPatch) -> None:
     assert gpu is not None
     assert gpu.vendor == "nvidia"
     assert gpu.vram_mb == 24564
+
+
+def test_stop_managed_server_terminates_process(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("prompt_piper.setup.llama_launcher.repo_root", lambda: tmp_path)
+    (tmp_path / "data").mkdir()
+    process = subprocess.Popen(["sleep", "60"], start_new_session=True)
+    pid_file_path().write_text(str(process.pid), encoding="utf-8")
+
+    assert stop_managed_server() is True
+    process.wait(timeout=5)
+
+    assert process.poll() is not None
+    assert not pid_file_path().is_file()
+
+
+def test_repo_root_honors_env_override(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from prompt_piper.setup.llama_launcher import repo_root
+
+    monkeypatch.setenv("PROMPT_PIPER_REPO_ROOT", str(tmp_path))
+    assert repo_root() == tmp_path.resolve()
+

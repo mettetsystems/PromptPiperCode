@@ -1,8 +1,15 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { queryKeys, useRegistryPrompts, useUpdateUserSettings, useUserSettings } from "../api/hooks";
+import {
+  queryKeys,
+  useDeleteSession,
+  useRegistryPrompts,
+  useUpdateUserSettings,
+  useUserSettings,
+} from "../api/hooks";
 import { formatApiError } from "../api/http";
+import type { RecentSessionEntry } from "../api/types";
 import { filterRegistryPrompts } from "../lib/registrySearch";
 import { loadRecentSessions } from "../lib/recentSessions";
 import { formatDate, sessionPath, sessionStepForState } from "../lib/sessionRouting";
@@ -18,7 +25,24 @@ export function DashboardPage() {
   const registry = useRegistryPrompts();
   const userSettings = useUserSettings();
   const saveSettings = useUpdateUserSettings();
+  const deleteSession = useDeleteSession();
   const [registrySearch, setRegistrySearch] = useState("");
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  async function handleDeleteSession(session: RecentSessionEntry) {
+    const confirmed = window.confirm(
+      `Delete “${session.title}”? This removes the session from this machine. Finalized registry prompts are kept.`,
+    );
+    if (!confirmed) {
+      return;
+    }
+    setDeleteError(null);
+    try {
+      await deleteSession.mutateAsync(session.id);
+    } catch (error) {
+      setDeleteError(formatApiError(error, "Could not delete session."));
+    }
+  }
 
   const configuredEndpoints = useMemo(
     () => userSettings.data?.api_endpoints.filter((endpoint) => endpoint.configured) ?? [],
@@ -111,6 +135,7 @@ export function DashboardPage() {
           {recent.isError && (
             <ErrorBanner message={formatApiError(recent.error, "Could not load recent sessions.")} />
           )}
+          {deleteError && <ErrorBanner message={deleteError} />}
           {!recent.isLoading && !recent.isError && (recent.data ?? []).length === 0 && (
             <p className="muted">No sessions tracked yet. Start a new prompt design session.</p>
           )}
@@ -139,7 +164,20 @@ export function DashboardPage() {
                         <p className="item-warn">{session.similarityWarning}</p>
                       )}
                     </div>
-                    <StatusBadge state={session.state} />
+                    <div className="item-actions">
+                      <StatusBadge state={session.state} />
+                      <button
+                        type="button"
+                        className="button compact"
+                        disabled={deleteSession.isPending && deleteSession.variables === session.id}
+                        aria-label={`Delete session ${session.title}`}
+                        onClick={() => {
+                          void handleDeleteSession(session);
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 </li>
               ))}

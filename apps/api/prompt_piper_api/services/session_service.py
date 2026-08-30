@@ -245,6 +245,11 @@ class SessionService:
         self._cache[session_id] = record
         return record
 
+    def delete_session(self, session_id: UUID) -> None:
+        self.get_session(session_id)
+        self._cache.pop(session_id, None)
+        self._store.delete(session_id)
+
     def _save(self, record: SessionRecord) -> None:
         self._cache[record.session.id] = record
         self._store.save(record)

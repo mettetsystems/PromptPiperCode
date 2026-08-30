@@ -78,8 +78,8 @@ React 18 + Vite + TypeScript. Routing in `apps/web/src/App.tsx`:
 
 | Route | Page | Workflow step |
 |-------|------|---------------|
-| `/` | Dashboard | Recent sessions |
-| `/sessions/new` | NewSessionPage | Create coding-prompt session |
+| `/` | Dashboard | Recent sessions; delete removes the session file |
+| `/sessions/new` | NewSessionPage | Initial prompt |
 | `/sessions/:id/clarify` | ClarificationPage | Answer dimension questions |
 | `/sessions/:id/edit` | DraftEditorPage | Edit draft |
 | `/sessions/:id/similarity` | SimilarityCheckPage | Review matches |

@@ -24,6 +24,8 @@ Provide:
 
 The system extracts a nested coding `RequirementCard` (six dimensions) from the request and enters `clarifying`. The response includes the first clarification question, dotted leaf field name, and quick-reply options (always ending with `unspecified`).
 
+The Dashboard **Recent sessions** list can delete a session with `POST /sessions/{id}/delete`. The new-session screen is titled **Initial prompt**; pasted tables are converted to markdown.
+
 Example:
 
 ```json
@@ -211,6 +213,7 @@ Scenario definition: `demo/coding_prompt.yaml`. E2E test: `tests/test_demo_flow.
 |------|--------|------|
 | Create | POST | `/sessions` |
 | Get session | GET | `/sessions/{id}` |
+| Delete session | POST | `/sessions/{id}/delete` |
 | Answer clarification | POST | `/sessions/{id}/answer` |
 | Edit draft | POST | `/sessions/{id}/edit` |
 | Finalize | POST | `/sessions/{id}/finalize` |

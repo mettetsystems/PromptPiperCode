@@ -7,6 +7,7 @@ import {
   completeClarification,
   createSession,
   createSessionFromTemplate,
+  deleteSession,
   editDraft,
   fetchRegistryPrompt,
   fetchRegistryPrompts,
@@ -22,7 +23,8 @@ import {
   suggestPrecisionReplacement,
 } from "../api/sessions";
 import { fetchUserSettings, updateUserSettings } from "../api/settings";
-import { upsertRecentSession } from "../lib/recentSessions";
+import { ApiError } from "./http";
+import { removeRecentSession, upsertRecentSession } from "../lib/recentSessions";
 
 export const queryKeys = {
   health: ["health"] as const,
@@ -63,6 +65,27 @@ export function useRegistryPrompt(promptId: string | undefined) {
     queryKey: queryKeys.registryPrompt(promptId ?? ""),
     queryFn: () => fetchRegistryPrompt(promptId!),
     enabled: Boolean(promptId),
+  });
+}
+
+export function useDeleteSession() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (sessionId: string) => {
+      try {
+        await deleteSession(sessionId);
+      } catch (error) {
+        if (!(error instanceof ApiError && error.status === 404)) {
+          throw error;
+        }
+      }
+      removeRecentSession(sessionId);
+      return sessionId;
+    },
+    onSuccess: (sessionId) => {
+      queryClient.removeQueries({ queryKey: queryKeys.session(sessionId) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.recentSessions });
+    },
   });
 }
 

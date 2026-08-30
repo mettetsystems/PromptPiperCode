@@ -241,7 +241,9 @@ Persistent install complete (${MODE}).
   Status:  systemctl --user status prompt-piper.service
   Logs:    journalctl --user -u prompt-piper.service -f
 
-The stack restarts on boot (user linger). To stop:
+The stack restarts on boot (user linger). To stop running processes without disabling boot start:
+  make shutdown
+To disable boot start:
   systemctl --user disable --now prompt-piper.service
 
 Guide: ${ROOT}/infra/quadlets/README.md

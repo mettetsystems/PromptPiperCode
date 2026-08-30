@@ -9,6 +9,7 @@ React 18 + TypeScript + Vite single-page app for the **PromptPiperCode** coding-
 |------|--------|---------|
 | `src/` | [src/README.md](src/README.md) | Application source |
 | `vite.config.ts` | — | Dev server, API proxy, SPA routing for `/sessions/:id/*` (including `precision`) |
+| `vite.proxy.ts` | — | Which `/sessions` paths are SPA vs API (non-GET always proxies) |
 | `package.json` | — | `@prompt-piper/web` scripts and dependencies |
 
 ## Run

@@ -44,6 +44,10 @@ export function fetchSession(sessionId: string): Promise<SessionDetailResponse> 
   return apiFetch<SessionDetailResponse>(`/sessions/${sessionId}`);
 }
 
+export function deleteSession(sessionId: string): Promise<void> {
+  return apiFetch<void>(`/sessions/${sessionId}/delete`, { method: "POST" });
+}
+
 export function answerClarification(
   sessionId: string,
   answer: string,
