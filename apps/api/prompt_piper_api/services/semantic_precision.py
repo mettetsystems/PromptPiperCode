@@ -111,19 +111,25 @@ class SemanticPrecisionEvaluator:
         )
 
         for line_number, raw_line in enumerate(body.splitlines(), start=1):
-            line = raw_line.strip()
-            if not line:
+            display_line = raw_line.rstrip()
+            stripped = raw_line.strip()
+            if not stripped:
                 continue
-            for match in pattern.finditer(line):
+            leading = len(raw_line) - len(raw_line.lstrip())
+            for match in pattern.finditer(stripped):
                 term = match.group(1)
                 vague_terms.add(term.lower())
+                start = leading + match.start()
+                end = leading + match.end()
                 findings.append(
                     VagueLanguageFinding(
                         id=_finding_id(line_number, term, match.start()),
                         term=term,
                         category=_category_for_term(term),
                         line_number=line_number,
-                        line=raw_line.rstrip(),
+                        line=display_line,
+                        start=start,
+                        end=end,
                         resolved=False,
                     )
                 )
@@ -140,9 +146,22 @@ class SemanticPrecisionEvaluator:
         )
 
     @staticmethod
-    def apply_replacement(body: str, *, line_number: int, term: str, replacement: str) -> str:
-        """Replace the first word-boundary occurrence of term on the given line."""
-        if not replacement.strip():
+    def apply_replacement(
+        body: str,
+        *,
+        line_number: int,
+        term: str,
+        replacement: str,
+        start: int | None = None,
+        end: int | None = None,
+    ) -> str:
+        """Replace one occurrence of term on the given line with literal text.
+
+        The replacement may be a word or a phrase. It is inserted as-is so
+        backslashes, digits, and punctuation are not treated as regex syntax.
+        """
+        cleaned = replacement.strip()
+        if not cleaned:
             msg = "Replacement text cannot be empty."
             raise ValueError(msg)
 
@@ -152,11 +171,37 @@ class SemanticPrecisionEvaluator:
             raise ValueError(msg)
 
         index = line_number - 1
-        pattern = re.compile(rf"\b{re.escape(term)}\b", re.IGNORECASE)
-        updated, count = pattern.subn(replacement.strip(), lines[index], count=1)
-        if count == 0:
+        line = lines[index]
+        if start is not None and end is not None:
+            if 0 <= start < end <= len(line) and line[start:end].lower() == term.lower():
+                lines[index] = line[:start] + cleaned + line[end:]
+                return "\n".join(lines)
+
+        updated = _replace_first_whole_token(line, term, cleaned)
+        if updated is None:
             msg = f"Could not find '{term}' on line {line_number}."
             raise ValueError(msg)
 
         lines[index] = updated
         return "\n".join(lines)
+
+
+def _is_token_char(char: str) -> bool:
+    return char.isalnum() or char == "_"
+
+
+def _replace_first_whole_token(line: str, term: str, replacement: str) -> str | None:
+    """Replace the first whole-token occurrence of term without using re.sub."""
+    lowered = line.lower()
+    needle = term.lower()
+    search_from = 0
+    while True:
+        pos = lowered.find(needle, search_from)
+        if pos < 0:
+            return None
+        end = pos + len(needle)
+        before_ok = pos == 0 or not _is_token_char(line[pos - 1])
+        after_ok = end >= len(line) or not _is_token_char(line[end])
+        if before_ok and after_ok:
+            return line[:pos] + replacement + line[end:]
+        search_from = pos + 1

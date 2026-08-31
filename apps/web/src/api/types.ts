@@ -169,6 +169,10 @@ export interface VagueLanguageFinding {
   category: VagueLanguageCategory;
   line_number: number;
   line: string;
+  /** Start offset of the term within `line`. */
+  start: number;
+  /** End offset of the term within `line`. */
+  end: number;
   resolved: boolean;
 }
 

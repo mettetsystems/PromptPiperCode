@@ -29,6 +29,17 @@ def test_lazy_adjectives_and_catch_all_nouns_are_detected() -> None:
     assert "issue" in terms
     assert "field" in terms
     assert result.score < PRECISION_THRESHOLD
+    for finding in result.findings:
+        assert finding.line[finding.start : finding.end].lower() == finding.term.lower()
+
+
+def test_finding_offsets_account_for_leading_whitespace() -> None:
+    evaluator = SemanticPrecisionEvaluator()
+    body = "  Write a good summary."
+    findings = evaluator.evaluate(body).findings
+    good = next(finding for finding in findings if finding.term.lower() == "good")
+    assert good.line.startswith("  ")
+    assert good.line[good.start : good.end].lower() == "good"
 
 
 def test_empty_body_scores_perfectly() -> None:
@@ -46,9 +57,43 @@ def test_apply_replacement_updates_line() -> None:
         line_number=finding.line_number,
         term=finding.term,
         replacement="measurable",
+        start=finding.start,
+        end=finding.end,
     )
     assert "measurable" in updated
     assert "great" not in updated.lower()
+
+
+def test_apply_replacement_accepts_a_phrase() -> None:
+    evaluator = SemanticPrecisionEvaluator()
+    body = "Deliver a good summary for leadership."
+    finding = next(item for item in evaluator.evaluate(body).findings if item.term.lower() == "good")
+    updated = evaluator.apply_replacement(
+        body,
+        line_number=finding.line_number,
+        term=finding.term,
+        replacement="measurable weekly status",
+        start=finding.start,
+        end=finding.end,
+    )
+    assert "measurable weekly status" in updated
+    assert "good" not in updated.lower()
+
+
+def test_apply_replacement_treats_phrase_as_literal_text() -> None:
+    evaluator = SemanticPrecisionEvaluator()
+    body = "Write a good summary."
+    finding = next(item for item in evaluator.evaluate(body).findings if item.term.lower() == "good")
+    updated = evaluator.apply_replacement(
+        body,
+        line_number=finding.line_number,
+        term=finding.term,
+        replacement=r"passing pytest for login (\1 coverage)",
+        start=finding.start,
+        end=finding.end,
+    )
+    assert r"passing pytest for login (\1 coverage)" in updated
+    assert "good" not in updated.lower()
 
 
 def test_user_word_lists_are_covered() -> None:
@@ -97,12 +142,12 @@ def test_apply_precision_replacement_updates_session_metrics() -> None:
     result = service.apply_precision_replacement(
         session_id,
         finding_id=finding.id,
-        replacement="concise",
+        replacement="concise weekly engineering status",
     )
     assert result.pre_inference_metrics is not None
     assert result.pre_inference_metrics.semantic_precision_score >= review.score
     assert result.optimization_result is not None
-    assert "concise" in result.optimization_result.optimized_body
+    assert "concise weekly engineering status" in result.optimization_result.optimized_body
     assert result.optimization_result.changes.precision_improvements
 
 

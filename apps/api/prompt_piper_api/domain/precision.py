@@ -16,6 +16,8 @@ class VagueLanguageFinding(BaseModel):
     category: VagueLanguageCategory
     line_number: int = Field(ge=1)
     line: str
+    start: int = Field(ge=0, description="Start offset of the term within `line`.")
+    end: int = Field(ge=0, description="End offset of the term within `line`.")
     resolved: bool = False
 
 

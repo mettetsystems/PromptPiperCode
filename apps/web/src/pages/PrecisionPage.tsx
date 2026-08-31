@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatApiError } from "../api/http";
@@ -9,11 +9,11 @@ import {
   useSuggestPrecisionReplacement,
 } from "../api/hooks";
 import { fetchPrecisionReview } from "../api/sessions";
-import type { VagueLanguageFinding } from "../api/types";
+import type { PrecisionSuggestResponse, VagueLanguageFinding } from "../api/types";
 import { formatPercent, sessionPath } from "../lib/sessionRouting";
 import {
-  DraftBlock,
   ErrorBanner,
+  HighlightedDraft,
   LoadingState,
   PageHeader,
   Panel,
@@ -39,6 +39,10 @@ export function PrecisionPage({ sessionId }: PrecisionPageProps) {
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState<string>("");
   const [custom, setCustom] = useState("");
+  const [suggestions, setSuggestions] = useState<PrecisionSuggestResponse | null>(null);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+  const customInputRef = useRef<HTMLTextAreaElement | null>(null);
+  const activeFindingIdRef = useRef<string | null>(null);
 
   const findings = precisionQuery.data?.findings ?? [];
   const current: VagueLanguageFinding | undefined = findings[index];
@@ -47,13 +51,42 @@ export function PrecisionPage({ sessionId }: PrecisionPageProps) {
     if (!current) {
       return;
     }
+    const findingId = current.id;
+    activeFindingIdRef.current = findingId;
     setSelected("");
     setCustom("");
-    void suggest.mutateAsync(current.id).then((result) => {
-      if (result.suggested_replacements.length > 0) {
-        setSelected(result.suggested_replacements[0] ?? "");
+    setSuggestions(null);
+    setSuggestionsLoading(true);
+
+    void suggest
+      .mutateAsync(findingId)
+      .then((result) => {
+        if (activeFindingIdRef.current !== findingId) {
+          return;
+        }
+        setSuggestions(result);
+        // Don't clobber a custom replacement the user already typed while waiting.
+        if (customInputRef.current?.value.trim()) {
+          return;
+        }
+        if (result.suggested_replacements.length > 0) {
+          setSelected(result.suggested_replacements[0] ?? "");
+        }
+      })
+      .catch(() => {
+        // Error surfaced via suggest.error; keep the custom field usable.
+      })
+      .finally(() => {
+        if (activeFindingIdRef.current === findingId) {
+          setSuggestionsLoading(false);
+        }
+      });
+
+    return () => {
+      if (activeFindingIdRef.current === findingId) {
+        activeFindingIdRef.current = null;
       }
-    });
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- refetch suggestions when finding changes
   }, [current?.id]);
 
@@ -63,6 +96,17 @@ export function PrecisionPage({ sessionId }: PrecisionPageProps) {
     }
     return selected.trim();
   }, [custom, selected]);
+
+  const highlight = useMemo(() => {
+    if (!current) {
+      return null;
+    }
+    return {
+      lineNumber: current.line_number,
+      start: current.start,
+      end: current.end,
+    };
+  }, [current]);
 
   if (sessionQuery.isLoading || precisionQuery.isLoading) {
     return <LoadingState label="Loading precision review…" />;
@@ -101,10 +145,11 @@ export function PrecisionPage({ sessionId }: PrecisionPageProps) {
   const applyError =
     apply.error != null ? formatApiError(apply.error, "Could not apply replacement.") : null;
 
-  const isBusy = suggest.isPending || apply.isPending;
+  // Keep the custom field and navigation usable while lexicon/LLM suggestions load.
+  const isApplying = apply.isPending;
 
   async function handleApply() {
-    if (!current || !replacement) {
+    if (!current || !replacement || isApplying) {
       return;
     }
     await apply.mutateAsync({ findingId: current.id, replacement });
@@ -154,88 +199,100 @@ export function PrecisionPage({ sessionId }: PrecisionPageProps) {
         }`}
       />
 
-      <Panel title="Line context">
-        <DraftBlock body={current?.line ?? ""} label={`Line ${current?.line_number ?? ""}`} />
-        <p className="muted">
-          Vague {current?.category === "lazy_adjective" ? "adjective" : "noun"}:{" "}
-          <strong>{current?.term}</strong>
-        </p>
-      </Panel>
-
-      <Panel title="Choose a precise replacement">
-        {suggestError && <ErrorBanner message={suggestError} />}
-        {applyError && <ErrorBanner message={applyError} />}
-
-        {suggest.data?.message && (
-          <p className="muted">{suggest.data.message}</p>
-        )}
-
-        {suggest.data && suggest.data.suggested_replacements.length > 0 && (
-          <div className="quick-replies" role="radiogroup" aria-label="Suggested replacements">
-            {suggest.data.suggested_replacements.map((option) => (
-              <button
-                key={option}
-                type="button"
-                className={
-                  selected === option && !custom.trim()
-                    ? "button secondary is-selected"
-                    : "button secondary"
-                }
-                disabled={isBusy}
-                aria-pressed={selected === option && !custom.trim()}
-                onClick={() => {
-                  setSelected(option);
-                  setCustom("");
-                }}
-              >
-                {option}
-              </button>
-            ))}
-          </div>
-        )}
-
-        <label className="field">
-          <span>Or enter your own</span>
-          <input
-            type="text"
-            className="input"
-            value={custom}
-            disabled={isBusy}
-            placeholder="Your precise wording"
-            onChange={(event) => {
-              setCustom(event.target.value);
-              setSelected("");
-            }}
+      <div className="grid-two">
+        <Panel title="Optimized prompt">
+          <HighlightedDraft
+            body={review.optimized_body}
+            label="Optimized"
+            highlight={highlight}
           />
-        </label>
+          <p className="muted">
+            Vague {current?.category === "lazy_adjective" ? "adjective" : "noun"}:{" "}
+            <strong>{current?.term}</strong>
+            {current ? ` (line ${current.line_number})` : ""}
+          </p>
+        </Panel>
 
-        <div className="button-row">
-          <button
-            type="button"
-            className="button"
-            disabled={isBusy || index === 0}
-            onClick={() => setIndex((value) => Math.max(0, value - 1))}
-          >
-            Previous
-          </button>
-          <button
-            type="button"
-            className="button primary"
-            disabled={isBusy || !replacement}
-            onClick={() => void handleApply()}
-          >
-            {apply.isPending ? "Applying…" : "Apply and continue"}
-          </button>
-          <button
-            type="button"
-            className="button"
-            disabled={isBusy || index >= findings.length - 1}
-            onClick={() => setIndex((value) => Math.min(findings.length - 1, value + 1))}
-          >
-            Skip for now
-          </button>
-        </div>
-      </Panel>
+        <Panel title="Choose a precise replacement">
+          {suggestError && <ErrorBanner message={suggestError} />}
+          {applyError && <ErrorBanner message={applyError} />}
+
+          {suggestionsLoading && (
+            <p className="muted">Loading replacement suggestions…</p>
+          )}
+
+          {suggestions?.message && !suggestionsLoading && (
+            <p className="muted">{suggestions.message}</p>
+          )}
+
+          {!suggestionsLoading && suggestions && suggestions.suggested_replacements.length > 0 && (
+            <div className="quick-replies" role="radiogroup" aria-label="Suggested replacements">
+              {suggestions.suggested_replacements.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  className={
+                    selected === option && !custom.trim()
+                      ? "button secondary is-selected"
+                      : "button secondary"
+                  }
+                  disabled={isApplying}
+                  aria-pressed={selected === option && !custom.trim()}
+                  onClick={() => {
+                    setSelected(option);
+                    setCustom("");
+                  }}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <label className="field">
+            <span>Or enter your own word or phrase</span>
+            <textarea
+              ref={customInputRef}
+              rows={3}
+              className="input"
+              value={custom}
+              disabled={isApplying}
+              placeholder="Replace the highlighted word with a word or a short phrase"
+              onChange={(event) => {
+                setCustom(event.target.value);
+                setSelected("");
+              }}
+            />
+          </label>
+
+          <div className="button-row">
+            <button
+              type="button"
+              className="button"
+              disabled={isApplying || index === 0}
+              onClick={() => setIndex((value) => Math.max(0, value - 1))}
+            >
+              Previous
+            </button>
+            <button
+              type="button"
+              className="button primary"
+              disabled={isApplying || !replacement}
+              onClick={() => void handleApply()}
+            >
+              {apply.isPending ? "Applying…" : "Apply and continue"}
+            </button>
+            <button
+              type="button"
+              className="button"
+              disabled={isApplying || index >= findings.length - 1}
+              onClick={() => setIndex((value) => Math.min(findings.length - 1, value + 1))}
+            >
+              Skip for now
+            </button>
+          </div>
+        </Panel>
+      </div>
 
       <p className="muted">
         <Link to={sessionPath(sessionId, "optimize")}>Return to optimization</Link>
